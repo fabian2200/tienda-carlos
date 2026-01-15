@@ -19,70 +19,6 @@ class VentasController extends Controller
 
         define('EURO',chr(36));
 
-        /*
-        $pdf = new Fpdf('P','mm',array(80,150));
-        $pdf->AddPage();
-
-        $pdf->SetFont('Helvetica','',12);
-        $pdf->Cell(60,4,"Provisiones Carlos Andres",0,1,'C');
-        $pdf->Cell(60,4,"NIT 12435619",0,1,'C');
-        $pdf->Cell(60,4,"CRA 15 #13B Bis - 62",0,1,'C');
-        $pdf->Cell(60,4,"Brr. Alfonso Lopez",0,1,'C');
-        $pdf->SetFont('Helvetica','',8);
-        $pdf->Cell(60,4,'C.I.F.: 01234567A',0,1,'C');
-        $pdf->Cell(60,4,'C/ Arturo Soria, 1',0,1,'C');
-        $pdf->Cell(60,4,'C.P.: 28028 Madrid (Madrid)',0,1,'C');
-        $pdf->Cell(60,4,'999 888 777',0,1,'C');
-        $pdf->Cell(60,4,'alfredo@lacodigoteca.com',0,1,'C');
-        
-        // DATOS FACTURA        
-        $pdf->Ln(5);
-        $pdf->Cell(60,4,'Fecha: '.date("d/m/Y"),0,1,'');
-        $pdf->Cell(60,4,'Metodo de pago: EFECTIVO',0,1,'');
-        
-        // COLUMNAS
-        $pdf->SetFont('Helvetica', 'B', 7);
-        $pdf->Cell(30, 10, 'Articulo', 0);
-        $pdf->Cell(5, 10, 'Ud',0,0,'R');
-        $pdf->Cell(10, 10, 'Precio',0,0,'R');
-        $pdf->Cell(15, 10, 'Total',0,0,'R');
-        $pdf->Ln(8);
-        $pdf->Cell(60,0,'','T');
-        $pdf->Ln(0);
-        
-        // PRODUCTOS
-        $pdf->SetFont('Helvetica', '', 7);
-
-        $TOTAL = 0;
-        foreach ($venta->productos as $producto) {
-            $pdf->MultiCell(30,4,$producto->descripcion,0,'L'); 
-            $pdf->Cell(35, -5, $producto->cantidad ,0,0,'R');
-            $pdf->Cell(10, -5, EURO.number_format($producto->precio, 0, ',', ' '),0,0,'R');
-            $pdf->Cell(15, -5, EURO.number_format(self::redondearAl100($producto->cantidad * $producto->precio), 2, ',', ' '),0,0,'R');
-            $pdf->Ln(3);
-
-            $TOTAL += $producto->cantidad * $producto->precio;
-        }
-        
-        // SUMATORIO DE LOS PRODUCTOS Y EL IVA
-        $pdf->Ln(6);
-        $pdf->Cell(60,0,'','T');
-        $pdf->Ln(2);    
-        
-        $pdf->Cell(25, 10, 'TOTAL', 0);    
-        $pdf->Cell(20, 10, '', 0);
-        $pdf->Cell(15, 10, EURO.number_format(self::redondearAl100($venta->total_pagar), 2, ',', ' '),0,0,'R');
-
-
-        // PIE DE PAGINA
-        $pdf->Ln(10);
-        $pdf->Cell(60,0,'Cliente: '.$venta->cliente->nombre,0,1,'C');
-        $pdf->Ln(3);
-        $pdf->Cell(60,0,'Gracias por su compra',0,1,'C');
-        
-        $pdf->Output('F', 'tickets/ticket_venta_'.$idVenta.'.pdf');
-        */
-
         if($imprimir_factura == "si"){
             $nombreImpresora = env("NOMBRE_IMPRESORA");
             $connector = new WindowsPrintConnector($nombreImpresora);
@@ -101,6 +37,7 @@ class VentasController extends Controller
             $impresora->text("\nDetalle de la compra\n");
             $impresora->text("\n===============================\n");
             $total = 0;
+            $numero_productos = 0;
             foreach ($venta->productos as $producto) {
                 $subtotal = $producto->cantidad * $producto->precio;
                 $total = $total + self::redondearAl100($subtotal);
@@ -108,6 +45,7 @@ class VentasController extends Controller
                 $impresora->text(sprintf("%.2f %s x %s\n", $producto->cantidad, $producto->unidad,  $producto->descripcion));
                 $impresora->setJustification(Printer::JUSTIFY_RIGHT);
                 $impresora->text('$' . self::redondearAl100($subtotal) . "\n");
+                $numero_productos++;
             }
             $impresora->setJustification(Printer::JUSTIFY_CENTER);
             $impresora->text("\n===============================\n");
@@ -115,6 +53,7 @@ class VentasController extends Controller
             $impresora->setEmphasis(true);
             $impresora->setTextSize(3, 3); 
             $impresora->text("Total: $" . self::redondearAl100($total) . "\n");
+            $impresora->text("Cantidad de productos: " . $numero_productos . "\n");
             $impresora->setJustification(Printer::JUSTIFY_CENTER);
             $impresora->setTextSize(1, 1);
             $impresora->text("Gracias por su compra\n");
@@ -150,6 +89,7 @@ class VentasController extends Controller
         $impresora->text("\nDetalle de la compra\n");
         $impresora->text("\n===============================\n");
         $total = 0;
+        $numero_productos = 0;
         foreach ($venta->productos as $producto) {
             $subtotal = $producto->cantidad * $producto->precio;
             $total = $total + self::redondearAl100($subtotal);
@@ -157,6 +97,7 @@ class VentasController extends Controller
             $impresora->text(sprintf("%.2f %s x %s\n", $producto->cantidad, $producto->unidad,  $producto->descripcion));
             $impresora->setJustification(Printer::JUSTIFY_RIGHT);
             $impresora->text('$' . self::redondearAl100($subtotal) . "\n");
+            $numero_productos++;
         }
         $impresora->setJustification(Printer::JUSTIFY_CENTER);
         $impresora->text("\n===============================\n");
@@ -164,6 +105,7 @@ class VentasController extends Controller
         $impresora->setEmphasis(true);
         $impresora->setTextSize(3, 3);
         $impresora->text("Total: $" . self::redondearAl100($total) . "\n");
+        $impresora->text("Cantidad de productos: " . $numero_productos . "\n");
         $impresora->setJustification(Printer::JUSTIFY_CENTER);
         $impresora->setTextSize(1, 1);
         $impresora->text("Gracias por su compra\n");
