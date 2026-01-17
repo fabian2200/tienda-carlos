@@ -286,18 +286,32 @@
                 type: "POST",
                 contentType: "application/json",
                 data: JSON.stringify(datos),
+                beforeSend: function() {
+                    Swal.fire({
+                        position: "center",
+                        icon: "info",
+                        title: "Guardando venta...",
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        onOpen: function() {
+                            Swal.showLoading();
+                        }
+                    });
+                },
                 success: function(respuesta) {
+                    Swal.close();
                     Swal.fire({
                         position: "center",
                         icon: "success",
                         title: "Venta realizada correctamente",
                         showConfirmButton: false,
-                        timer: 2000
+                        timer: 1000
                     });
                 
                     setTimeout(() => {
                         location.reload();
-                    }, 2000);
+                    }, 1000);
                 },
             });
 
