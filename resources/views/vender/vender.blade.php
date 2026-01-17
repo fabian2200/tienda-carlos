@@ -33,7 +33,10 @@
             <hr>
             <div class="row" style="padding: 20px">
                 <div class="col-lg-9" style="padding: 20px; border: 2px solid #80808054;">
-                    <h2 style="background-color: aqua; padding: 5px; width: fit-content;">Total: <span id="total_pagar" ></span></h2>
+                    <div id="div_totales" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="background-color: aqua; padding: 5px; width: fit-content;">Total: <span id="total_pagar" ></span></h2>
+                        <h2 style="background-color: #ffc027; padding: 5px; width: fit-content;">Numero de productos: <span id="total_productos" ></span></h2>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead>
@@ -487,6 +490,8 @@
 
                     document.getElementById("total_pagar").innerHTML = total.toLocaleString('es-CO', { style: 'currency', currency: 'COP' });;
                     document.getElementById("total_pagar_tv").value = total;
+
+                    document.getElementById("total_productos").innerHTML = productos.length;
 
                     productos.forEach(function(producto, index) {
                         var row = '<tr>' +

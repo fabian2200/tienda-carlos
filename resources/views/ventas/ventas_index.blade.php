@@ -49,6 +49,9 @@
                             <th>Fecha</th>
                             <th>Cliente</th>
                             <th>Total</th>
+                            <th>Domicilio</th>
+                            <th>Pago</th>
+                            <th>Fiado</th>
                             <th style="text-align: center">Opciones</th>
                         </tr>
                     </thead>
@@ -58,6 +61,9 @@
                             <td>{{$venta->created_at}}</td>
                             <td>{{$venta->cliente}}</td>
                             <td>${{number_format($venta->total_pagar, 2)}}</td>
+                            <td>${{number_format($venta->precio_domi, 2)}}</td>
+                            <td>${{number_format($venta->total_dinero, 2)}}</td>
+                            <td>${{number_format($venta->total_fiado, 2)}}</td>
                             <td style="display: flex; justify-content: space-evenly; align-items: center;">
                                 <a type="button" class="btn btn-info"  onclick="ImprimirTicket({{$venta->id}})">
                                     <i class="fa fa-print"></i>

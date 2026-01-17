@@ -82,7 +82,7 @@ class ProductosController extends Controller
         $producto->imagen = $base64Image;
         $producto->saveOrFail();
 
-        //$this->registrarProductoNube($request->except('imagen'), $producto->imagen);
+        $this->registrarProductoNube($request->except('imagen'), $producto->imagen);
         return redirect()->route("productos.create");
     }
 
@@ -152,7 +152,7 @@ class ProductosController extends Controller
 
         $producto->imagen = $base64Image;
         $producto->saveOrFail();
-        //$this->actualizarProductoNube($producto);
+        $this->actualizarProductoNube($producto);
         return redirect()->route("productos.index")->with("mensaje", "Producto actualizado");
     }
 
@@ -213,7 +213,7 @@ class ProductosController extends Controller
             'precio_venta' => $precio_venta
         ]);
 
-        //$this->modificarInventarioProductoNube($codigo_producto, $nueva_cantidad_disponible, $precio_compra, $precio_venta);
+        $this->modificarInventarioProductoNube($codigo_producto, $nueva_cantidad_disponible, $precio_compra, $precio_venta);
         return redirect()->route("productos.index")->with("mensaje", "Producto actualizado");
     }
 
@@ -256,7 +256,7 @@ class ProductosController extends Controller
             'codigo_barras' => $codigo_nuevo
         ]);
 
-        //self::modificarCodigoProductoNube($codigo_anterior, $codigo_nuevo);
+        $this->modificarCodigoProductoNube($codigo_anterior, $codigo_nuevo);
         return redirect()->route("productos.index")->with("mensaje", "Código de barras actualizado");
     }
 

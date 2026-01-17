@@ -50,10 +50,14 @@ class VentasController extends Controller
             $impresora->setJustification(Printer::JUSTIFY_CENTER);
             $impresora->text("\n===============================\n");
             $impresora->setJustification(Printer::JUSTIFY_RIGHT);
+            $impresora->setTextSize(1, 1); 
+            $impresora->text("\nCantidad de productos: " . $numero_productos . "\n");
+            $impresora->setJustification(Printer::JUSTIFY_CENTER);
+            $impresora->text("\n===============================\n");
+            $impresora->setJustification(Printer::JUSTIFY_RIGHT);
             $impresora->setEmphasis(true);
             $impresora->setTextSize(3, 3); 
             $impresora->text("Total: $" . self::redondearAl100($total) . "\n");
-            $impresora->text("Cantidad de productos: " . $numero_productos . "\n");
             $impresora->setJustification(Printer::JUSTIFY_CENTER);
             $impresora->setTextSize(1, 1);
             $impresora->text("Gracias por su compra\n");
@@ -102,10 +106,20 @@ class VentasController extends Controller
         $impresora->setJustification(Printer::JUSTIFY_CENTER);
         $impresora->text("\n===============================\n");
         $impresora->setJustification(Printer::JUSTIFY_RIGHT);
+        $impresora->setTextSize(1, 1); 
+        $impresora->text("\nCantidad de productos: " . $numero_productos . "\n");
+        $impresora->setJustification(Printer::JUSTIFY_CENTER);
+        $impresora->text("\n===============================\n");
+        $impresora->setJustification(Printer::JUSTIFY_RIGHT);
         $impresora->setEmphasis(true);
         $impresora->setTextSize(3, 3);
-        $impresora->text("Total: $" . self::redondearAl100($total) . "\n");
-        $impresora->text("Cantidad de productos: " . $numero_productos . "\n");
+        if($venta->precio_domi > 0){
+            $impresora->text("Subtotal: $" . self::redondearAl100($total) . "\n");
+            $impresora->text("Domicilio: $" . $venta->precio_domi . "\n");
+            $impresora->text("Total: $" . self::redondearAl100($total + $venta->precio_domi) . "\n");
+        }else{
+            $impresora->text("Total: $" . self::redondearAl100($total) . "\n");
+        }
         $impresora->setJustification(Printer::JUSTIFY_CENTER);
         $impresora->setTextSize(1, 1);
         $impresora->text("Gracias por su compra\n");
