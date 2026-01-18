@@ -286,6 +286,19 @@
                 type: "POST",
                 contentType: "application/json",
                 data: JSON.stringify(datos),
+                beforeSend: function() {
+                    // Mostrar el mensaje de carga antes de enviar la solicitud
+                    Swal.fire({
+                        title: 'Guardando venta...',
+                        text: 'Por favor espere mientras procesamos su solicitud',
+                        icon: 'info',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        willOpen: () => {
+                            Swal.showLoading(); // Muestra el icono de carga
+                        }
+                    });
+                },
                 success: function(respuesta) {
                     Swal.fire({
                         position: "center",
