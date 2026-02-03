@@ -287,15 +287,15 @@
                 contentType: "application/json",
                 data: JSON.stringify(datos),
                 beforeSend: function() {
+                    // Mostrar el mensaje de carga antes de enviar la solicitud
                     Swal.fire({
-                        position: "center",
-                        icon: "info",
-                        title: "Guardando venta...",
+                        title: 'Guardando venta...',
+                        text: 'Por favor espere mientras procesamos su solicitud',
+                        icon: 'info',
                         showConfirmButton: false,
                         allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        onOpen: function() {
-                            Swal.showLoading();
+                        willOpen: () => {
+                            Swal.showLoading(); // Muestra el icono de carga
                         }
                     });
                 },
