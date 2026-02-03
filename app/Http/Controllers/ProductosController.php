@@ -184,8 +184,27 @@ class ProductosController extends Controller
      */
     public function destroy(Producto $producto)
     {
+        $this->eliminarProductoNube($producto->codigo_barras);
         $producto->delete();
         return redirect()->route("productos.index")->with("mensaje", "Producto eliminado");
+    }
+
+    public function eliminarProductoNube($codigo_producto){
+        if (checkdnsrr('example.com', 'A')) {
+            $client = new Client();
+            $url = 'https://provisiones-carlosandres.shop/eliminar_producto.php';
+            $data = [
+                'codigo_producto' => $codigo_producto
+            ];
+        }
+
+        $response = $client->post($url, [
+            'form_params' => $data
+        ]);
+        
+        $response = $response->getBody();
+        $body = json_decode($response, true);
+        return $body;
     }
 
     public function productosCategoria(Request $request){
