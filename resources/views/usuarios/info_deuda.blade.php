@@ -23,7 +23,7 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <h2 style="color: rgb(42, 54, 165); font-weight: bold; margin-bottom: 0px">Factura # {{$item->id}}</h2>
-                        <h6 style="color: rgb(4, 6, 22); font-weight: bold">Fecha {{$item->fecha_venta}}</h6>
+                        <h6 style="color: rgb(4, 6, 22); font-weight: bold">Fecha: {{Carbon\Carbon::parse($item->created_at)->format('d/m/Y H:i:s A')}}</h6>
                         <h4 style="color: rgb(165, 42, 42); font-weight: bold">Total Fiado en esta factura $ {{$item->total_fiado}}</h4>
                     </div>
                 </div>

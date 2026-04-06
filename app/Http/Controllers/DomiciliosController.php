@@ -8,6 +8,7 @@ use App\ProductoVendido;
 use App\Venta;
 use Illuminate\Http\Request;
 use App\Http\Controllers\VentasController;
+use Illuminate\Support\Facades\Auth;
 use DB;
 
 use GuzzleHttp\Client;
@@ -35,6 +36,7 @@ class DomiciliosController extends Controller
         $venta->total_vueltos =  $request->input('total_vueltos');
         $imprimir_factura = $request->input("imprimir_factura");
         $venta->fecha_venta = date("Y-m-d");
+        $venta->id_usuario = Auth::user()->id;
 
         $celular_cliente =  $request->input('celular_cliente');
         $nombre_cliente =  $request->input('nombre_cliente');
@@ -162,6 +164,7 @@ class DomiciliosController extends Controller
             $impresora->setEmphasis(false);
             $impresora->text("Cliente: ");
             $impresora->text($venta->cliente->nombre . "\n");
+            $impresora->text("Vendido por: " . $venta->usuario->name . "\n");
             $impresora->text("\nDirección de entrega" . "\n");
             $impresora->text($direccion . "\n");
             $impresora->text("\nDetalle de la compra\n");

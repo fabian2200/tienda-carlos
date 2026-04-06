@@ -25,6 +25,11 @@ Route::get("/logout", function () {
     return redirect()->route("home");
 })->name("logout");
 
+Route::get('/register', function () {
+    return view('auth.register');
+})->name('register');
+
+Route::post('/register', 'AuthController@registerStore')->name('register.store');
 
 Route::middleware("auth")
     ->group(function () {
@@ -62,6 +67,8 @@ Route::middleware("auth")
         Route::get("/generar-pdf", "ProductosController@generarPDF")->name("generarPDF");
         Route::get("/domicilios", "DomiciliosController@obtenerDomicilios")->name("ventas.domicilios");
         Route::post("/terminarVentaDomicilio", "DomiciliosController@terminarVentaDomicilio")->name("terminarVentaDomicilio");
+
+        Route::get("/cajas", "CajasController@index")->name("cajas.index");
     }
 );
 

@@ -8,17 +8,19 @@
                 <div style="padding: 20px;" class="col-lg-3">
                     <div class="card_ventas" style="background-color: rgb(6, 139, 247);">
                         <div style="width: 100%">
-                            <h3><strong>Total Vendido Hoy</strong></h3>
+                            <h3><strong>Total Vendido (Hoy)</strong></h3>
                         </div> 
                         <h1>$ {{ number_format($totalVendidoHoy, 2) }}</h1>
                         <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-donate"></i>
                     </div>
                 </div>
-                <div class="col-lg-3"></div>
+                <div class="col-lg-3">
+
+                </div>
                 <div style="padding: 20px;" class="col-lg-3">
                     <div class="card_ventas" style="background-color: rgb(4, 95, 1);">
                         <div style="width: 100%">
-                            <h3><strong>Total Vendido</strong></h3>
+                            <h3><strong>Total Vendido (Mes)</strong></h3>
                         </div> 
                         <h1>$ {{ number_format($totalVendido, 2) }}</h1>
                         <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-cash-register"></i>
@@ -52,6 +54,7 @@
                             <th>Domicilio</th>
                             <th>Pago</th>
                             <th>Fiado</th>
+                            <th>Vueltos</th>
                             <th style="text-align: center">Opciones</th>
                         </tr>
                     </thead>
@@ -64,6 +67,7 @@
                             <td>${{number_format($venta->precio_domi, 2)}}</td>
                             <td>${{number_format($venta->total_dinero, 2)}}</td>
                             <td>${{number_format($venta->total_fiado, 2)}}</td>
+                            <td>${{number_format($venta->total_vueltos, 2)}}</td>
                             <td style="display: flex; justify-content: space-evenly; align-items: center;">
                                 <a type="button" class="btn btn-info"  onclick="ImprimirTicket({{$venta->id}})">
                                     <i class="fa fa-print"></i>

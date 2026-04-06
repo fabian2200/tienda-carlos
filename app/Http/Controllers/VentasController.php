@@ -9,6 +9,7 @@ use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 use Mike42\Escpos\Printer;
 use Codedge\Fpdf\Fpdf\Fpdf;
 use App\Cliente;
+use Illuminate\Support\Facades\Auth;
 
 class VentasController extends Controller
 {
@@ -34,6 +35,7 @@ class VentasController extends Controller
             $impresora->setEmphasis(false);
             $impresora->text("Cliente: ");
             $impresora->text($venta->cliente->nombre . "\n");
+            $impresora->text("Vendido por: " . $venta->usuario->name . "\n");
             $impresora->text("\nDetalle de la compra\n");
             $impresora->text("\n===============================\n");
             $total = 0;
@@ -90,6 +92,7 @@ class VentasController extends Controller
         $impresora->setEmphasis(false);
         $impresora->text("Cliente: ");
         $impresora->text($venta->cliente->nombre . "\n");
+        $impresora->text("Vendido por: " . $venta->usuario->name . "\n");
         $impresora->text("\nDetalle de la compra\n");
         $impresora->text("\n===============================\n");
         $total = 0;
@@ -144,6 +147,7 @@ class VentasController extends Controller
         $ventasConTotales = Venta::join("clientes", "clientes.id", "ventas.id_cliente")
             ->select("ventas.*", "clientes.nombre as cliente")
             ->orderBy("ventas.created_at", "DESC")
+            ->where("ventas.id_usuario", Auth::user()->id)
             ->get();
 
         
@@ -163,6 +167,8 @@ class VentasController extends Controller
         $abonado = 0;
 
         $resultado = Cliente::join("fiados", "clientes.id", "=", "fiados.id_cliente")
+        ->join("ventas", "ventas.id", "=", "fiados.id_factura")
+        ->where("ventas.id_usuario", Auth::user()->id)
         ->selectRaw("clientes.*, SUM(fiados.total_fiado) as total_fiado")
         ->groupBy('clientes.id')
         ->get();
@@ -192,12 +198,14 @@ class VentasController extends Controller
         $hoy = date("Y-m-d");
         $totalVendidoHoy = Venta::join("clientes", "clientes.id", "ventas.id_cliente")
         ->where("ventas.fecha_venta", $hoy)
+        ->where("ventas.id_usuario", Auth::user()->id)
         ->sum("ventas.total_pagar");
 
         $primeros100 = Venta::join("clientes", "clientes.id", "ventas.id_cliente")
             ->select("ventas.*", "clientes.nombre as cliente")
             ->orderBy("ventas.created_at", "DESC")
             ->limit(100)
+            ->where("ventas.id_usuario", Auth::user()->id)
             ->get();
             
         return view("ventas.ventas_index", [
@@ -286,6 +294,8 @@ class VentasController extends Controller
     public function ventasPorFecha(Request $request)
     {
 
+        $idUsuario = Auth::user()->id;
+
         $fecha1 = $request->input("fecha1");
         $fecha2 = $request->input("fecha2");
 
@@ -294,6 +304,7 @@ class VentasController extends Controller
         ->select("ventas.*", "clientes.nombre as cliente")
         ->whereBetween("ventas.fecha_venta", [$fecha1, $fecha2])
         ->orderBy("ventas.fecha_venta", "ASC")
+        ->where("ventas.id_usuario", $idUsuario)
         ->get();
 
     

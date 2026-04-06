@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\VentasController;
 use DB;
 use App\Http\Controllers\DomiciliosController;
+use Illuminate\Support\Facades\Auth;
 
 class VenderController extends Controller
 {
@@ -32,6 +33,7 @@ class VenderController extends Controller
         $venta->total_vueltos =  $request->input('total_vueltos');
         $imprimir_factura = $request->input("imprimir_factura");
         $venta->fecha_venta = date("Y-m-d");
+        $venta->id_usuario = Auth::user()->id;
         $venta->saveOrFail();
 
         if($venta->total_fiado > 0){

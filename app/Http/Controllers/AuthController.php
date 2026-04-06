@@ -5,9 +5,43 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\User;
 
 class AuthController extends Controller
 {
+
+    public function register()
+    {
+        return view('auth.register');
+    }
+
+    public function registerStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|string|email|unique:users',
+            'password' => 'required|string|confirmed',
+        ]);
+
+        $user = new User([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+        ]);
+        
+        if ($user->save()) {
+            return redirect()->route('register')->with([
+                'success' => 1,
+                'message' => 'Usuario registrado correctamente'
+            ]);
+        } else {
+            return redirect()->route('register')->with([
+                'success' => 2,
+                'message' => 'Error al registrar usuario'
+            ]);
+        }
+    }
+
     public function signup(Request $request)
     {
         $request->validate([

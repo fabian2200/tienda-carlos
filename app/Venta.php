@@ -36,4 +36,9 @@ class Venta extends Model
     {
         return $this->belongsTo("App\Cliente", "id_cliente");
     }
+
+    public function usuario()
+    {
+        return $this->belongsTo("App\User", "id_usuario");
+    }
 }

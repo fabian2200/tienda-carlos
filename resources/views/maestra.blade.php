@@ -196,6 +196,17 @@
             top: 3px;
             right: 0px;
         }
+
+        .btn-dark {
+            background-color:rgb(32, 32, 32) !important;
+            border-color:rgb(0, 0, 0) !important;
+            color: white !important;
+        }
+
+        .btn-dark:hover {
+            background-color: #23272b !important;
+            color: white !important;
+        }
     </style>
 </head>
 <body>
@@ -211,30 +222,18 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('login') }}">Login</a>
                 </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('register') }}">
-                        Registro
-                    </a>
-                </li>
             @else
                 <li class="nav-item">
                     <a class="nav-link btn btn-info" style="color: white !important;" href="{{route("home")}}">Inicio&nbsp;<i class="fa fa-home"></i></a>
+                </li>
+                <li class="nav-item ml-2">
+                    <a class="nav-link btn btn-success" style="color: white !important;" href="{{route("vender.index")}}">Vender&nbsp;<i class="fa fa-cart-plus"></i></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{route("productos.index")}}">Productos&nbsp;<i class="fa fa-box"></i></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{route("vender.index")}}">Vender&nbsp;<i class="fa fa-cart-plus"></i></a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="{{route("ventas.index")}}">Ventas&nbsp;<i class="fa fa-list"></i></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{route("usuarios.index")}}">Usuarios&nbsp;<i class="fa fa-users"></i></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{route("clientes.index")}}">Clientes&nbsp;<i class="fa fa-users"></i></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{route("compras.index")}}">Compras&nbsp;<i class="fas fa-money-bill-alt"></i></a>
@@ -250,16 +249,26 @@
         </ul>
         <ul class="navbar-nav ml-auto">
             @auth
+                @if(Auth::user()->email == 'admin')
+                    <li class="nav-item mr-2"> 
+                        <a class="nav-link btn btn-primary" style="color: white !important;" href="{{ route('register') }}">
+                            Registrar usuario <i class="fas fa-user-plus"></i>
+                        </a>
+                    </li>
+                @endif
                 <li style="margin-right: 15px" class="nav-item">
                     <a style="color: #fff" href="{{route("productos.alert")}}" class="nav-link btn btn-warning">
                        Productos en alerta <i class="fas fa-exclamation-triangle"></i>
                     </a>
                 </li>
 
-                <li class="nav-item">
+                <li class="nav-item" style="margin-right: 15px">
                     <a style="color: #fff" href="{{route("logout")}}" class="nav-link btn btn-danger">
-                        Salir ({{ Auth::user()->name }}) <i class="fas fa-power-off"></i>
+                        Salir <i class="fas fa-power-off"></i>
                     </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link btn btn-dark"><i class="fas fa-user"></i> <b>{{ Auth::user()->name }}</b></a>
                 </li>
             @endauth
            
