@@ -168,7 +168,6 @@ class VentasController extends Controller
 
         $resultado = Cliente::join("fiados", "clientes.id", "=", "fiados.id_cliente")
         ->join("ventas", "ventas.id", "=", "fiados.id_factura")
-        ->where("ventas.id_usuario", Auth::user()->id)
         ->selectRaw("clientes.*, SUM(fiados.total_fiado) as total_fiado")
         ->groupBy('clientes.id')
         ->get();
