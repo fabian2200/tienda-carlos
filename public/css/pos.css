@@ -353,19 +353,38 @@ table { font-size: 20px !important; }
 
 /* ===================== 7. Login ===================== */
 .sin-menu .contenido { padding: 0; }
-.login { display: flex; min-height: 100vh; }
+/* Foto de fondo: interior de una tienda (Matthew Zheng, Unsplash). El degradado verde
+   deja legibles los datos del negocio a la izquierda y deja ver la tienda a la derecha. */
+.login {
+    display: flex; min-height: 100vh; position: relative; isolation: isolate;
+    background: var(--hoja-oscura) url("../img/login-tienda.jpg") center / cover no-repeat;
+}
+.login::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(90deg, rgba(20, 63, 48, .96) 0%, rgba(20, 63, 48, .88) 36%, rgba(20, 63, 48, .45) 64%, rgba(20, 63, 48, .3) 100%);
+}
 .login-marca {
-    flex: 0 0 46%; position: relative; overflow: hidden;
-    background: var(--hoja-oscura); color: #fff;
+    flex: 0 0 50%; position: relative; color: #fff;
     padding: 56px clamp(32px, 5vw, 72px);
     display: flex; flex-direction: column; justify-content: space-between;
 }
-/* Un solo gesto decorativo: el aro de mazorca que asoma por la esquina */
-.login-marca::after {
-    content: ""; position: absolute; right: -150px; bottom: -150px; width: 440px; height: 440px;
-    border-radius: 50%; border: 58px solid rgba(226, 169, 59, .14); pointer-events: none;
+.login-marca-cuerpo { position: relative; margin: auto 0; }
+.login-etiqueta {
+    display: inline-flex; align-items: center; gap: 8px; margin: 26px 0 0; padding: 6px 14px;
+    border-radius: 999px; background: rgba(226, 169, 59, .18); color: var(--mazorca);
+    font-family: var(--display); font-weight: 600; font-size: 15px;
 }
-.login-marca-cuerpo { position: relative; z-index: 1; margin: auto 0; }
+.login-funciones { display: flex; flex-wrap: wrap; gap: 8px; margin: 30px 0 0; padding: 0; list-style: none; }
+.login-funciones li {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .07); color: #E3EEE8; font-size: 15px;
+}
+.login-funciones i { color: var(--mazorca); }
+.login-credito {
+    position: absolute; right: 16px; bottom: 10px; margin: 0; font-size: 12px;
+    color: rgba(255, 255, 255, .8); text-shadow: 0 1px 3px rgba(0, 0, 0, .7);
+}
+.login-credito a { color: inherit; text-decoration: underline; }
 .login-logo {
     width: 64px; height: 64px; border-radius: 16px; background: var(--mazorca); color: var(--hoja-oscura);
     display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 26px;
@@ -374,15 +393,18 @@ img.login-logo { background: #fff; object-fit: contain; padding: 4px; }
 .login-nombre {
     font-family: var(--display); font-weight: 700; color: #fff;
     font-size: clamp(40px, 4.4vw, 64px); line-height: 1.02; letter-spacing: -.025em;
-    margin: 28px 0 22px; max-width: 10ch;
+    margin: 16px 0 22px; max-width: 10ch;
 }
 .login-datos { margin: 0; color: #CFE0D7; font-size: 17px; line-height: 1.65; font-family: var(--display); font-variant-numeric: tabular-nums; }
 .login-datos dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .login-datos dd { margin: 0; }
 .login-firma { position: relative; z-index: 1; margin: 0; color: #8FB3A2; font-size: 14px; }
 
-.login-formulario { flex: 1; display: grid; place-items: center; padding: 48px 24px; background: var(--lienzo); }
-.login-formulario form { width: min(380px, 100%); }
+.login-formulario { flex: 1; display: grid; place-items: center; padding: 48px 24px; }
+.login-tarjeta {
+    width: min(420px, 100%); padding: 38px 34px 34px; background: var(--papel);
+    border-radius: 18px; box-shadow: 0 24px 60px rgba(10, 30, 22, .45);
+}
 .login-titulo { font-size: 34px; margin: 0 0 6px; }
 .login-sub { color: var(--tinta-2); margin: 0 0 30px; }
 .login .campo { margin-bottom: 20px; }
@@ -404,14 +426,17 @@ img.login-logo { background: #fff; object-fit: contain; padding: 4px; }
 .login-entrar { width: 100%; height: 56px; font-size: 18px; margin-top: 6px; }
 
 @media (max-width: 767.98px) {
-    .login { flex-direction: column; }
-    .login-marca { flex: none; padding: 28px 24px 30px; }
-    .login-marca::after { width: 260px; height: 260px; right: -110px; bottom: -130px; border-width: 40px; }
+    .login { flex-direction: column; background-position: 70% center; }
+    .login::before { background: linear-gradient(180deg, rgba(20, 63, 48, .93) 0%, rgba(20, 63, 48, .8) 45%, rgba(20, 63, 48, .55) 100%); }
+    .login-marca { flex: none; padding: 28px 20px 8px; }
     .login-logo { width: 48px; height: 48px; font-size: 20px; border-radius: 12px; }
-    .login-nombre { font-size: 34px; margin: 18px 0 10px; max-width: none; }
+    .login-etiqueta { margin-top: 18px; font-size: 14px; }
+    .login-nombre { font-size: 34px; margin: 12px 0 10px; max-width: none; }
     .login-datos { font-size: 15px; }
+    .login-funciones { display: none; }
     .login-firma { display: none; }
-    .login-formulario { place-items: start center; padding: 32px 20px 40px; }
+    .login-formulario { place-items: start center; padding: 20px 16px 44px; }
+    .login-tarjeta { padding: 28px 22px 24px; border-radius: 14px; }
 }
 
 /* ===================== 8. Inicio ===================== */
