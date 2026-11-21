@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Cliente;
 use DB;
 use App\Venta;
+use App\Services\TicketService;
 use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 use Mike42\Escpos\Printer;
 
@@ -20,7 +22,11 @@ class UserController extends Controller
      */
     public function index()
     {
-        return view("usuarios.usuarios_index", ["usuarios" => User::all()]);
+        $usuarios = User::select("users.*")
+            ->selectRaw("(SELECT COUNT(*) FROM ventas WHERE ventas.id_usuario = users.id) as numero_ventas")
+            ->orderBy("name")
+            ->get();
+        return view("usuarios.usuarios_index", ["usuarios" => $usuarios]);
     }
 
     public function deudores()
@@ -61,6 +67,9 @@ class UserController extends Controller
         }
 
         $total_por_cobrar = $total_fiado - $total_abonado_clientes;
+
+        // Los que más deben, primero
+        usort($clientes_deben, function ($a, $b) { return $b->total_deuda <=> $a->total_deuda; });
 
         return view("usuarios.usuarios_deudores", ["clientes_deudores" => $clientes_deben, "total_fiado" => $total_fiado, "total_abonado_clientes" => $total_abonado_clientes, "total_por_cobrar" => $total_por_cobrar]);
     }
@@ -142,10 +151,16 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $usuario = new User($request->input());
-        $usuario->password = Hash::make($usuario->password);
+        $datos = $request->validate([
+            "name" => "required|string|max:255",
+            "email" => "required|string|max:255|unique:users,email",
+            "password" => "required|string|min:4",
+        ], [], ["name" => "nombre", "email" => "usuario"]);
+
+        $usuario = new User($datos);
+        $usuario->password = Hash::make($datos["password"]);
         $usuario->saveOrFail();
-        return redirect()->route("usuarios.index")->with("mensaje", "Usuario guardado");
+        return redirect()->route("usuarios.index")->with("mensaje", "Usuario creado: " . $usuario->name)->with("tipo", "success");
     }
 
     /**
@@ -181,10 +196,20 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        $user->fill($request->input());
-        $user->password = Hash::make($user->password);
+        $datos = $request->validate([
+            "name" => "required|string|max:255",
+            "email" => "required|string|max:255|unique:users,email," . $user->id,
+            "password" => "nullable|string|min:4",
+        ], [], ["name" => "nombre", "email" => "usuario"]);
+
+        $user->name = $datos["name"];
+        $user->email = $datos["email"];
+        // Contraseña vacía = se conserva la actual (antes había que escribirla siempre)
+        if (!empty($datos["password"])) {
+            $user->password = Hash::make($datos["password"]);
+        }
         $user->saveOrFail();
-        return redirect()->route("usuarios.index")->with("mensaje", "Usuario actualizado");
+        return redirect()->route("usuarios.index")->with("mensaje", "Usuario actualizado: " . $user->name)->with("tipo", "success");
     }
 
     /**
@@ -195,8 +220,14 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        // Evita quedarse sin acceso: no se puede eliminar el usuario con el que se inició sesión
+        if (Auth::id() === $user->id) {
+            return redirect()->route("usuarios.index")
+                ->with("mensaje", "No puedes eliminar el usuario con el que iniciaste sesión.")
+                ->with("tipo", "danger");
+        }
         $user->delete();
-        return redirect()->route("usuarios.index")->with("mensaje", "Usuario eliminado");
+        return redirect()->route("usuarios.index")->with("mensaje", "Usuario eliminado")->with("tipo", "success");
     }
 
     public function infoDeuda(Request $request){
@@ -277,18 +308,8 @@ class UserController extends Controller
             ->get();
         }
 
-        $nombreImpresora = env("NOMBRE_IMPRESORA");
-        $connector = new WindowsPrintConnector($nombreImpresora);
-        $impresora = new Printer($connector);
-        $impresora->setJustification(Printer::JUSTIFY_CENTER);
-        $impresora->setEmphasis(true);
-        $impresora->text("Ticket de Deuda\n");
-        $impresora->text("Provisiones Carlos Andres\n");
-        $impresora->text("NIT 12435619\n");
-        $impresora->text("CRA 15 #13B Bis - 62\n");
-        $impresora->text("Brr. Alfonso Lopez\n");
-        $impresora->text(date("d/m/Y") . "\n");
-        $impresora->setEmphasis(false);
+        $impresora = TicketService::impresora();
+        TicketService::encabezado($impresora, "Ticket de Deuda", date("d/m/Y"));
         $impresora->text("Cliente: ");
         $impresora->text($resultado->nombre . "\n");
         $impresora->text("\nDetalle de la deuda\n");
@@ -322,7 +343,7 @@ class UserController extends Controller
         $impresora->setJustification(Printer::JUSTIFY_CENTER);
         $impresora->setTextSize(1, 1);
         $impresora->text("\nDetalle de Deuda\n");
-        $impresora->text("\nVentSOFT By Ing. Fabian Quintero\n");
+        TicketService::pie($impresora, false);
         $impresora->close();
         return response()->json(["mensaje" => "Ticket de deuda impreso correctamente!"]);
     }

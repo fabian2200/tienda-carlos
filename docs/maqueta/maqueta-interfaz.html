@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta PdV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --hoja:#1E5B45; --hoja-oscura:#143F30; --hoja-suave:#E3EEE8;
+  --mazorca:#E2A93B; --mazorca-oscura:#C98F22; --mazorca-suave:#FCF1DA;
+  --lienzo:#F4F6F3; --papel:#FFFFFF; --tinta:#1D2622; --tinta-2:#5B6862;
+  --niebla:#DCE2DE; --alerta:#B3343F; --alerta-suave:#F8E6E8;
+  --r-campo:6px; --r-panel:12px;
+  --display:"Bricolage Grotesque", system-ui, sans-serif;
+  --texto:"Atkinson Hyperlegible", system-ui, sans-serif;
+  --ticket:"IBM Plex Mono", ui-monospace, monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--lienzo);font-family:var(--texto);color:var(--tinta);font-size:16px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--mazorca);outline-offset:2px}
+.oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* Cifras en Bricolage: el 0 con raya de Atkinson parece un precio tachado */
+.cifra,.num,.cantidad span,.billetes button,#recibido,.prod small{font-family:var(--display);font-feature-settings:"tnum"}
+
+/* Selector de la maqueta (no es parte del sistema) */
+.selector{position:fixed;top:9px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:4px;background:#fff;padding:4px;border-radius:999px;box-shadow:0 4px 18px rgba(20,63,48,.25);font-size:14px}
+.selector button{border:0;background:none;padding:6px 16px;border-radius:999px;cursor:pointer;font-weight:700;color:var(--tinta-2)}
+.selector button[aria-pressed="true"]{background:var(--hoja);color:#fff}
+
+.pantalla{display:none;height:100vh}
+.pantalla.activa{display:flex}
+
+/* ---------- LOGIN ---------- */
+.login-marca{flex:0 0 46%;background:var(--hoja-oscura);color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.login-marca::after{content:"";position:absolute;right:-140px;bottom:-140px;width:420px;height:420px;border-radius:50%;border:56px solid rgba(226,169,59,.14)}
+.logo{width:56px;height:56px;border-radius:14px;background:var(--mazorca);display:grid;place-items:center;color:var(--hoja-oscura);font-family:var(--display);font-weight:700;font-size:24px}
+.login-marca h1{font-family:var(--display);font-weight:700;font-size:56px;line-height:1.02;letter-spacing:-.02em;margin:28px 0 20px;max-width:9ch}
+.datos-negocio{line-height:1.6;color:#CFE0D7;font-size:17px;margin:0}
+.datos-negocio dt{position:absolute;left:-9999px}
+.datos-negocio dd{margin:0}
+.login-pie{color:#8FB3A2;font-size:14px;position:relative;z-index:1}
+.login-form{flex:1;display:grid;place-items:center;padding:48px}
+.login-form form{width:min(380px,100%)}
+.login-form h2{font-family:var(--display);font-size:34px;font-weight:600;margin:0 0 6px;letter-spacing:-.01em}
+.login-form p.sub{color:var(--tinta-2);margin:0 0 32px}
+.campo{margin-bottom:20px}
+.campo label{display:block;font-weight:700;margin-bottom:8px;font-size:15px}
+.entrada{width:100%;height:52px;border:1.5px solid var(--niebla);background:#fff;border-radius:var(--r-campo);padding:0 16px;font-size:17px;transition:border-color .15s}
+.entrada:focus{border-color:var(--hoja);outline:none;box-shadow:0 0 0 4px var(--hoja-suave)}
+.con-boton{position:relative}
+.con-boton button{position:absolute;right:6px;top:6px;height:40px;width:40px;border:0;background:none;color:var(--tinta-2);cursor:pointer;border-radius:var(--r-campo)}
+.btn{height:52px;border:0;border-radius:var(--r-campo);font-weight:700;font-size:17px;cursor:pointer;padding:0 20px;display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.btn-principal{background:var(--mazorca);color:var(--hoja-oscura);width:100%}
+.btn-principal:hover{background:var(--mazorca-oscura)}
+
+/* ---------- MENÚ LATERAL COMPACTO (en Vender) ---------- */
+.lateral{flex:0 0 72px;background:var(--hoja-oscura);color:#CFE0D7;display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:4px}
+.lateral .logo{width:42px;height:42px;font-size:17px;border-radius:11px;margin-bottom:14px}
+.lateral a{width:48px;height:46px;display:grid;place-items:center;border-radius:10px;color:inherit;text-decoration:none;position:relative;font-size:18px}
+.lateral a:hover{background:rgba(255,255,255,.08);color:#fff}
+.lateral a.activo{background:rgba(226,169,59,.18);color:var(--mazorca)}
+.lateral a.activo::before{content:"";position:absolute;left:-12px;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:var(--mazorca)}
+.lateral a .punto{position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:50%;background:var(--alerta);box-shadow:0 0 0 2px var(--hoja-oscura)}
+.lateral a::after{content:attr(data-nombre);position:absolute;left:58px;white-space:nowrap;background:var(--tinta);color:#fff;font-size:14px;padding:6px 10px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:5}
+.lateral a:hover::after,.lateral a:focus-visible::after{opacity:1}
+.lateral .separa{width:32px;height:1px;background:rgba(255,255,255,.1);margin:6px 0}
+.lateral .abajo{margin-top:auto}
+
+/* ---------- VENDER: una sola pantalla, sin scroll ---------- */
+.principal{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+.barra{flex:none;height:52px;display:flex;align-items:center;gap:18px;padding:0 22px;border-bottom:1px solid var(--niebla)}
+.barra h1{font-family:var(--display);font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+.barra .negocio{color:var(--tinta-2);font-size:14.5px}
+.usuario{margin-left:auto;display:flex;align-items:center;gap:14px;color:var(--tinta-2);font-size:14.5px}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--hoja-suave);color:var(--hoja);display:grid;place-items:center;font-weight:700}
+.salir{color:var(--tinta-2);text-decoration:none;display:flex;gap:6px;align-items:center}
+
+.vender{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:18px;padding:16px 20px 14px}
+
+/* Columna izquierda: escáner + carrito (la lista crece hacia adentro, nunca la página) */
+.izq{display:flex;flex-direction:column;min-height:0;gap:12px}
+.escaner{flex:none;display:flex;gap:10px}
+.escaner .con-icono{flex:1;position:relative}
+.escaner .con-icono i{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--hoja);font-size:20px}
+.escaner .entrada{height:56px;padding-left:52px;font-size:19px;border-width:2px}
+.escaner .btn{height:56px;background:#fff;border:2px solid var(--niebla);color:var(--tinta);font-size:16px}
+.tecla{font-family:var(--texto);font-size:11.5px;font-weight:700;border:1px solid currentColor;border-radius:4px;padding:1px 5px;opacity:.65}
+
+.carrito{flex:1;min-height:0;background:var(--papel);border-radius:var(--r-panel);border:1px solid var(--niebla);display:flex;flex-direction:column;overflow:hidden}
+.lista{flex:1;min-height:0;overflow:auto}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;z-index:1;font-weight:700;font-size:13.5px;color:var(--tinta-2);text-align:left;padding:10px 16px;border-bottom:1px solid var(--niebla);background:#FAFBFA}
+td{padding:8px 16px;border-bottom:1px solid var(--niebla);vertical-align:middle}
+.num{text-align:right;white-space:nowrap}
+.prod strong{display:block;font-size:16px;line-height:1.25}
+.prod small{color:var(--tinta-2);font-size:12.5px}
+tbody tr:hover{background:var(--lienzo)}
+tr.reciente{animation:resalte 1.8s ease-out}
+@keyframes resalte{from{background:var(--mazorca-suave)}to{background:transparent}}
+.cantidad{display:inline-flex;align-items:center;border:1.5px solid var(--niebla);border-radius:var(--r-campo);overflow:hidden}
+.cantidad button{width:32px;height:32px;border:0;background:#fff;cursor:pointer;color:var(--hoja);font-weight:700;font-size:18px}
+.cantidad button:hover{background:var(--hoja-suave)}
+.cantidad span{min-width:72px;text-align:center;font-weight:600;white-space:nowrap}
+.quitar{border:0;background:none;color:var(--tinta-2);cursor:pointer;width:32px;height:32px;border-radius:var(--r-campo);opacity:0;transition:opacity .15s}
+tr:hover .quitar,.quitar:focus-visible{opacity:1}
+.quitar:hover{color:var(--alerta);background:var(--alerta-suave)}
+.pie-carrito{flex:none;display:flex;align-items:center;gap:20px;padding:9px 16px;border-top:1px solid var(--niebla);background:#FAFBFA;color:var(--tinta-2);font-size:13.5px}
+.pie-carrito .cuenta{margin-left:auto;color:var(--tinta);font-weight:700}
+
+/* Columna derecha: la tirilla ES el panel de cobro */
+.tirilla{min-height:0;background:#fff;box-shadow:0 10px 30px rgba(20,63,48,.13);display:flex;flex-direction:column;padding:22px 20px 16px;gap:12px;
+  -webkit-mask:conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) 50%/16px 100%;
+          mask:conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) 50%/16px 100%;}
+.tirilla .cab{font-family:var(--ticket);font-size:12px;text-align:center;line-height:1.45;color:#3A423E;padding-bottom:10px;border-bottom:1.5px dashed #B9C2BD}
+.tirilla .cab strong{font-weight:600;font-size:13px}
+.total{display:flex;justify-content:space-between;align-items:flex-end}
+.total .etq{color:var(--tinta-2);font-size:14px;line-height:1.3}
+.total b{font-family:var(--display);font-weight:700;font-size:54px;line-height:1;letter-spacing:-.02em;font-feature-settings:"tnum"}
+.fila{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mini label,.mini .lbl{display:block;font-weight:700;font-size:13px;margin-bottom:5px}
+.mini select,.mini input{width:100%;height:46px;border:1.5px solid var(--niebla);border-radius:var(--r-campo);padding:0 12px;background:#fff}
+.mini input{font-size:22px;font-weight:700}
+.mini input:focus,.mini select:focus{border-color:var(--hoja);outline:none;box-shadow:0 0 0 4px var(--hoja-suave)}
+.cambio{height:46px;border-radius:var(--r-campo);background:var(--hoja-suave);color:var(--hoja);display:flex;align-items:center;justify-content:flex-end;padding:0 12px;font-family:var(--display);font-size:24px;font-weight:700;font-feature-settings:"tnum";transition:background .2s,color .2s}
+.cambio.falta{background:var(--alerta-suave);color:var(--alerta)}
+.cambio.fiado{background:var(--mazorca-suave);color:#8A5D0B}
+.billetes{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.billetes button{height:38px;border:1.5px solid var(--niebla);background:#fff;border-radius:var(--r-campo);cursor:pointer;font-weight:600;font-size:14.5px}
+.billetes button:hover{border-color:var(--hoja);background:var(--hoja-suave)}
+.opciones{display:flex;gap:8px}
+.chip{flex:1;position:relative}
+.chip input{position:absolute;opacity:0}
+.chip span{display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:1.5px solid var(--niebla);border-radius:999px;cursor:pointer;font-size:14px;font-weight:700;color:var(--tinta-2);justify-content:center}
+.chip span i{font-size:13px}
+.chip input:checked+span{background:var(--hoja);border-color:var(--hoja);color:#fff}
+.chip input:focus-visible+span{outline:3px solid var(--mazorca);outline-offset:2px}
+.acciones{margin-top:auto;display:flex;flex-direction:column;gap:6px}
+.btn-cobrar{height:62px;font-size:22px;width:100%;background:var(--mazorca);color:var(--hoja-oscura);font-family:var(--display);font-weight:700}
+.btn-cobrar:hover{background:var(--mazorca-oscura)}
+.cancelar{background:none;border:0;color:var(--alerta);font-weight:700;cursor:pointer;padding:4px;align-self:center;font-size:14.5px}
+
+.aviso{position:fixed;top:66px;left:50%;transform:translate(-50%,-10px);background:var(--hoja);color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.2);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:60}
+.aviso.ver{opacity:1;transform:translate(-50%,0)}
+
+/* Pantallas bajas (1280×720, 1366×650 con barra del navegador) */
+@media (max-height:700px){
+  .vender{padding:12px 16px 10px;gap:14px}
+  .escaner .entrada,.escaner .btn{height:50px}
+  .tirilla{padding:18px 18px 12px;gap:9px}
+  .total b{font-size:46px}
+  .mini select,.mini input,.cambio{height:42px}
+  .btn-cobrar{height:54px}
+  td{padding:6px 16px}
+}
+@media (max-width:1100px){.vender{grid-template-columns:minmax(0,1fr) 340px}.billetes button{font-size:13px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<nav class="selector" aria-label="Pantallas de la maqueta">
+  <button data-ver="login" aria-pressed="false">Login</button>
+  <button data-ver="vender" aria-pressed="true">Vender</button>
+</nav>
+
+<!-- ============ LOGIN ============ -->
+<section class="pantalla" id="login">
+  <aside class="login-marca">
+    <div style="position:relative;z-index:1">
+      <div class="logo" aria-hidden="true">CA</div>
+      <h1>Provisiones Carlos Andres</h1>
+      <dl class="datos-negocio">
+        <dt>NIT</dt><dd>NIT 12435619</dd>
+        <dt>Dirección</dt><dd>CRA 15 #13B Bis - 62</dd>
+        <dt>Barrio</dt><dd>Brr. Alfonso López</dd>
+      </dl>
+    </div>
+    <p class="login-pie">VentSOFT</p>
+  </aside>
+  <div class="login-form">
+    <form onsubmit="event.preventDefault();ir('vender')">
+      <h2>Iniciar sesión</h2>
+      <p class="sub">Entra con tu usuario de caja.</p>
+      <div class="campo"><label for="u">Usuario</label><input id="u" class="entrada" autocomplete="username" value="carlos"></div>
+      <div class="campo"><label for="p">Contraseña</label>
+        <div class="con-boton"><input id="p" class="entrada" type="password" autocomplete="current-password" value="12345678">
+          <button type="button" aria-label="Mostrar contraseña" onclick="const i=document.getElementById('p');i.type=i.type==='password'?'text':'password';this.firstElementChild.className=i.type==='password'?'fa-regular fa-eye':'fa-regular fa-eye-slash'"><i class="fa-regular fa-eye"></i></button></div></div>
+      <button class="btn btn-principal" type="submit">Iniciar sesión</button>
+    </form>
+  </div>
+</section>
+
+<!-- ============ VENDER (todo en una sola pantalla) ============ -->
+<section class="pantalla activa" id="vender">
+  <nav class="lateral" aria-label="Menú">
+    <div class="logo" aria-hidden="true">CA</div>
+    <a href="#" class="activo" data-nombre="Vender" aria-current="page"><i class="fa-solid fa-cash-register"></i><span class="oculto">Vender</span></a>
+    <a href="#" data-nombre="Ventas"><i class="fa-solid fa-receipt"></i><span class="oculto">Ventas</span></a>
+    <a href="#" data-nombre="Compras"><i class="fa-solid fa-truck-ramp-box"></i><span class="oculto">Compras</span></a>
+    <div class="separa"></div>
+    <a href="#" data-nombre="Productos"><i class="fa-solid fa-basket-shopping"></i><span class="oculto">Productos</span></a>
+    <a href="#" data-nombre="Stock bajo: 7 productos"><i class="fa-solid fa-triangle-exclamation"></i><span class="punto"></span><span class="oculto">Stock bajo</span></a>
+    <div class="separa"></div>
+    <a href="#" data-nombre="Clientes"><i class="fa-solid fa-user-group"></i><span class="oculto">Clientes</span></a>
+    <a href="#" data-nombre="Fiados"><i class="fa-solid fa-book"></i><span class="oculto">Fiados</span></a>
+    <a href="#" data-nombre="Usuarios"><i class="fa-solid fa-id-badge"></i><span class="oculto">Usuarios</span></a>
+    <a href="#" class="abajo" data-nombre="Datos del negocio"><i class="fa-solid fa-store"></i><span class="oculto">Datos del negocio</span></a>
+  </nav>
+
+  <div class="principal">
+    <header class="barra">
+      <h1>Vender</h1>
+      <span class="negocio">Provisiones Carlos Andres</span>
+      <div class="usuario"><div class="avatar">C</div>Carlos<a class="salir" href="#" onclick="ir('login');return false"><i class="fa-solid fa-arrow-right-from-bracket"></i>Salir</a></div>
+    </header>
+
+    <div class="vender">
+      <!-- Izquierda: escanear y carrito -->
+      <div class="izq">
+        <div class="escaner">
+          <label class="con-icono"><span class="oculto">Código de barras o nombre</span>
+            <i class="fa-solid fa-barcode"></i>
+            <input id="codigo" class="entrada" placeholder="Escanea el código o escribe el nombre" autocomplete="off">
+          </label>
+          <button class="btn" type="button" onclick="agregarDemo()"><i class="fa-solid fa-magnifying-glass"></i>Buscar <span class="tecla">F2</span></button>
+          <button class="btn" type="button" onclick="aviso('Balanza: 0,750 kg')"><i class="fa-solid fa-scale-balanced"></i>Balanza <span class="tecla">F4</span></button>
+        </div>
+        <div class="carrito">
+          <div class="lista">
+            <table>
+              <thead><tr><th>Producto</th><th class="num">Precio</th><th style="text-align:center">Cantidad</th><th class="num">Subtotal</th><th style="width:44px"></th></tr></thead>
+              <tbody id="filas"></tbody>
+            </table>
+          </div>
+          <div class="pie-carrito">
+            <span><span class="tecla">F2</span> Buscar</span><span><span class="tecla">F4</span> Balanza</span><span><span class="tecla">F9</span> Cobrar</span><span><span class="tecla">Supr</span> Quitar el último</span>
+            <span class="cuenta" id="cuenta"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Derecha: tirilla + cobro, sin ventanas emergentes -->
+      <form class="tirilla" onsubmit="event.preventDefault();cobrar()" aria-label="Cobro">
+        <div class="cab"><strong>PROVISIONES CARLOS ANDRES</strong><br>NIT 12435619 · CRA 15 #13B Bis - 62</div>
+        <div class="total"><span class="etq">Total<br><span id="arts"></span></span><b id="total">$ 0</b></div>
+        <div class="mini"><label for="cliente">Cliente</label>
+          <select id="cliente" onchange="actualizar()"><option>Cliente general</option><option>Doña Marta</option><option>Restaurante El Fogón</option></select></div>
+        <div class="fila">
+          <div class="mini"><label for="recibido">Recibido</label><input id="recibido" class="cifra" inputmode="numeric" placeholder="0" oninput="formatear(this);actualizar()"></div>
+          <div class="mini"><span class="lbl" id="etqCambio">Cambio</span><div class="cambio" id="cambio">$ 0</div></div>
+        </div>
+        <div class="billetes" aria-label="Valores rápidos">
+          <button type="button" onclick="rec(0)">Exacto</button><button type="button" onclick="rec(20000)">20.000</button><button type="button" onclick="rec(50000)">50.000</button><button type="button" onclick="rec(100000)">100.000</button><button type="button" onclick="rec(200000)">200.000</button>
+        </div>
+        <div class="opciones">
+          <label class="chip"><input type="checkbox" id="fiar" onchange="actualizar()"><span><i class="fa-solid fa-book"></i>Fiar lo que falta</span></label>
+          <label class="chip"><input type="checkbox" id="imprimir" checked><span><i class="fa-solid fa-print"></i>Imprimir ticket</span></label>
+        </div>
+        <div class="acciones">
+          <button class="btn btn-cobrar" type="submit">Cobrar <span class="tecla" style="opacity:.6">F9</span></button>
+          <button class="cancelar" type="button" onclick="cancelar()">Cancelar venta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div class="aviso" id="aviso" role="status"></div>
+
+<script>
+const fmt = n => "$ " + Math.round(n).toLocaleString("es-CO");
+const r100 = n => Math.round(n/100)*100;
+// El más reciente va arriba: siempre se ve lo último escaneado
+let productos = [
+  {d:"Aceite Premier 1 L", c:"7702109011203", p:11900, q:1, u:"und"},
+  {d:"Huevos AA x 30", c:"7707212345008", p:16500, q:1, u:"und"},
+  {d:"Tomate chonto", c:"PESO-0012", p:4800, q:0.75, u:"kg"},
+  {d:"Leche Alquería entera 1 L", c:"7702177000127", p:4200, q:3, u:"und"},
+  {d:"Arroz Diana 500 g", c:"7702511000014", p:2300, q:2, u:"und"},
+  {d:"Panela Doña Pepa x 2", c:"7702354000881", p:5600, q:1, u:"und"},
+  {d:"Café Sello Rojo 250 g", c:"7702032103209", p:9800, q:1, u:"und"},
+];
+const extras = [
+  {d:"Pan tajado Bimbo", c:"7705326001256", p:6800, q:1, u:"und"},
+  {d:"Gaseosa Postobón 1,5 L", c:"7702090012345", p:4500, q:2, u:"und"},
+  {d:"Jabón Rey x 3", c:"7702310044556", p:7200, q:1, u:"und"},
+];
+const total = () => productos.reduce((s,x)=>s+r100(x.p*x.q),0);
+const cant = x => x.u==="kg" ? x.q.toLocaleString("es-CO",{minimumFractionDigits:2})+" kg" : x.q;
+
+function pintar(nuevo){
+  document.getElementById("filas").innerHTML = productos.map((x,i)=>`
+    <tr class="${nuevo===i?'reciente':''}">
+      <td class="prod"><strong>${x.d}</strong><small>${x.c}</small></td>
+      <td class="num">${fmt(x.p)}${x.u==='kg'?' /kg':''}</td>
+      <td style="text-align:center"><span class="cantidad">
+        <button type="button" aria-label="Menos ${x.d}" onclick="cambiar(${i},-1)">−</button><span>${cant(x)}</span><button type="button" aria-label="Más ${x.d}" onclick="cambiar(${i},1)">+</button></span></td>
+      <td class="num"><strong>${fmt(r100(x.p*x.q))}</strong></td>
+      <td class="num"><button type="button" class="quitar" aria-label="Quitar ${x.d}" onclick="quitar(${i})"><i class="fa-solid fa-xmark"></i></button></td>
+    </tr>`).join("") || `<tr><td colspan="5" style="padding:48px;text-align:center;color:var(--tinta-2)">Escanea el primer producto para empezar la venta.</td></tr>`;
+  const n = productos.length, u = productos.reduce((s,x)=>s+(x.u==="kg"?1:x.q),0);
+  document.getElementById("cuenta").textContent = `${n} productos · ${u} unidades`;
+  document.getElementById("arts").textContent = `${n} productos`;
+  document.getElementById("total").textContent = fmt(total());
+  actualizar();
+}
+function cambiar(i,d){const x=productos[i];x.q=Math.max(x.u==='kg'?0.25:1,+(x.q+(x.u==='kg'?d*0.25:d)).toFixed(2));pintar()}
+function quitar(i){productos.splice(i,1);pintar()}
+function agregarDemo(){const x=extras.shift();if(!x)return aviso("Fin de los productos de ejemplo");productos.unshift(x);pintar(0);document.getElementById("codigo").focus()}
+
+function valor(){return +document.getElementById("recibido").value.replace(/\D/g,"")||0}
+function formatear(el){const v=valor();el.value=v?v.toLocaleString("es-CO"):""}
+function rec(v){const el=document.getElementById("recibido");el.value=(v||total()).toLocaleString("es-CO");actualizar();document.querySelector(".btn-cobrar").focus()}
+function actualizar(){
+  const t=total(), r=valor(), c=r-t, fiar=document.getElementById("fiar").checked, caja=document.getElementById("cambio"), etq=document.getElementById("etqCambio");
+  caja.classList.remove("falta","fiado");
+  if(!r){etq.textContent="Cambio";caja.textContent=fmt(0);return}
+  if(c>=0){etq.textContent="Cambio";caja.textContent=fmt(c)}
+  else if(fiar){etq.textContent="Queda fiado";caja.textContent=fmt(-c);caja.classList.add("fiado")}
+  else{etq.textContent="Falta";caja.textContent=fmt(-c);caja.classList.add("falta")}
+}
+function cobrar(){
+  const t=total(), r=valor(), fiar=document.getElementById("fiar").checked;
+  if(!productos.length) return aviso("Agrega al menos un producto");
+  if(r && r<t && !fiar) return aviso("Falta dinero. Activa “Fiar lo que falta” o corrige lo recibido.");
+  aviso("Venta cobrada" + (document.getElementById("imprimir").checked ? " · imprimiendo ticket" : ""));
+}
+function cancelar(){aviso("Venta cancelada")}
+let tAviso;function aviso(m){const a=document.getElementById("aviso");a.textContent=m;a.classList.add("ver");clearTimeout(tAviso);tAviso=setTimeout(()=>a.classList.remove("ver"),2200)}
+
+function ir(v){
+  document.querySelectorAll(".pantalla").forEach(p=>p.classList.toggle("activa",p.id===v));
+  document.querySelectorAll(".selector button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ver===v));
+  if(v==="vender") setTimeout(()=>document.getElementById("codigo").focus(),50);
+}
+document.querySelectorAll(".selector button").forEach(b=>b.onclick=()=>ir(b.dataset.ver));
+document.addEventListener("keydown",e=>{
+  if(!document.getElementById("vender").classList.contains("activa"))return;
+  if(e.key==="F9"){e.preventDefault();cobrar()}
+  if(e.key==="F2"){e.preventDefault();agregarDemo()}
+  if(e.key==="F4"){e.preventDefault();aviso("Balanza: 0,750 kg")}
+  if(e.key==="Delete"&&document.activeElement.id==="codigo"){e.preventDefault();if(productos.length)quitar(0)}
+});
+pintar();
+ir("vender");
+</script>
+</body>
+</html>

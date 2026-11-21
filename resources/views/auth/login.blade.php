@@ -1,67 +1,91 @@
 @extends('maestra')
-@section("titulo")
-    Login
-@endsection
+@section("titulo", "Iniciar sesión")
 @section('contenido')
-    <div class="row justify-content-center" style="background-image: url('/img/frutas.png'); height: 88vh; background-size: 100% 134%">
-        <div class="col-md-8" style="display: flex; justify-content: center; align-items: center;">
-            <div class="card" style="width: 500px">
-                <div class="card-header">Login</div>
+<div class="login">
+    {{-- Izquierda: datos del negocio (tabla `negocio`) --}}
+    <aside class="login-marca">
+        <div class="login-marca-cuerpo">
+            @if($negocio->urlLogo())
+                <img class="login-logo" src="{{ $negocio->urlLogo() }}" alt="Logo de {{ $negocio->nombre }}">
+            @else
+                <span class="login-logo" aria-hidden="true">{{ $negocio->iniciales() }}</span>
+            @endif
+            <h1 class="login-nombre">{{ $negocio->nombre }}</h1>
+            <dl class="login-datos">
+                @if($negocio->nit)<dt>NIT</dt><dd>NIT {{ $negocio->nit }}</dd>@endif
+                @if($negocio->direccion)<dt>Dirección</dt><dd>{{ $negocio->direccion }}</dd>@endif
+                @if($negocio->barrioTexto())<dt>Barrio</dt><dd>{{ $negocio->barrioTexto() }}</dd>@endif
+                @if($negocio->ciudad)<dt>Ciudad</dt><dd>{{ $negocio->ciudad }}</dd>@endif
+                @if($negocio->telefono)<dt>Teléfono</dt><dd>Tel. {{ $negocio->telefono }}</dd>@endif
+            </dl>
+        </div>
+        @if($negocio->firma_software)
+            <p class="login-firma">{{ $negocio->firma_software }}</p>
+        @endif
+    </aside>
 
-                <div class="card-body">
-                    <form method="POST" action="{{ route('login') }}">
-                        @csrf
+    {{-- Derecha: formulario --}}
+    <div class="login-formulario">
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+            <h2 class="login-titulo">Iniciar sesión</h2>
+            <p class="login-sub">Entra con tu usuario de caja.</p>
 
-                        <div class="form-group row">
-                            <label for="email"
-                                   class="col-md-4 col-form-label text-md-right">Usuario</label>
+            @if($errors->any())
+                <div class="login-error" role="alert">
+                    <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+                    <span>{{ $errors->first() }}</span>
+                </div>
+            @endif
 
-                            <div class="col-md-6">
-                                <input id="email" type="text" class="form-control @error('email') is-invalid @enderror"
-                                       name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+            <div class="campo">
+                <label for="email">Usuario</label>
+                <input id="email" type="text" name="email" value="{{ old('email') }}"
+                       class="form-control input-grande @error('email') is-invalid @enderror"
+                       required autocomplete="username" autocapitalize="none" spellcheck="false" autofocus>
+            </div>
 
-                                @error('email')
-                                <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label for="password"
-                                   class="col-md-4 col-form-label text-md-right">Contraseña</label>
-
-                            <div class="col-md-6">
-                                <input id="password" type="password"
-                                       class="form-control @error('password') is-invalid @enderror" name="password"
-                                       required autocomplete="current-password">
-
-                                @error('password')
-                                <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                                @enderror
-                            </div>
-                        </div>
-
-
-                        <div class="form-group row mb-0">
-                            <div class="col-md-8 offset-md-4">
-                                <button style="width: 74%" type="submit" class="btn btn-primary">
-                                    Iniciar Sesión
-                                </button>
-
-                                @if (Route::has('password.request'))
-                                    <a class="btn btn-link" href="{{ route('password.request') }}">
-                                        {{ __('Forgot Your Password?') }}
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </form>
+            <div class="campo">
+                <label for="password">Contraseña</label>
+                <div class="login-clave">
+                    <input id="password" type="password" name="password"
+                           class="form-control input-grande @error('password') is-invalid @enderror"
+                           required autocomplete="current-password">
+                    <button type="button" class="login-ver-clave" id="verClave" aria-label="Mostrar contraseña" aria-pressed="false">
+                        <i class="far fa-eye" aria-hidden="true"></i>
+                    </button>
                 </div>
             </div>
-        </div>
+
+            <button type="submit" class="btn btn-mazorca login-entrar" id="botonEntrar">Iniciar sesión</button>
+        </form>
     </div>
+</div>
+
+<script>
+    (function () {
+        const clave = document.getElementById("password"),
+            ver = document.getElementById("verClave"),
+            usuario = document.getElementById("email");
+
+        ver.addEventListener("click", () => {
+            const mostrar = clave.type === "password";
+            clave.type = mostrar ? "text" : "password";
+            ver.setAttribute("aria-pressed", mostrar);
+            ver.setAttribute("aria-label", mostrar ? "Ocultar contraseña" : "Mostrar contraseña");
+            ver.firstElementChild.className = mostrar ? "far fa-eye-slash" : "far fa-eye";
+            clave.focus();
+        });
+
+        // Si ya viene el usuario (error de contraseña), el cursor va a la contraseña
+        if (usuario.value) { clave.focus(); }
+
+        // Evitar doble envío
+        document.querySelector(".login form").addEventListener("submit", () => {
+            const b = document.getElementById("botonEntrar");
+            b.disabled = true;
+            b.textContent = "Entrando…";
+        });
+    })();
+</script>
 @endsection

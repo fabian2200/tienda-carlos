@@ -144,6 +144,10 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'email' => 'usuario',
+        'password' => 'contraseña',
+        'id_proveedor' => 'proveedor',
+    ],
 
 ];

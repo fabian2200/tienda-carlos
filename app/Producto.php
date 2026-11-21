@@ -27,5 +27,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Producto extends Model
 {
-    protected $fillable = ["codigo_barras", "descripcion", "precio_compra", "precio_venta", "existencia", "categoria", "unidad_medida", "imagen"];
+    // Por debajo de esta existencia el producto aparece en "Stock bajo".
+    const UMBRAL_ALERTA = 10;
+
+    protected $fillable = ["codigo_barras", "descripcion", "precio_compra", "precio_venta", "existencia", "categoria", "unidad_medida", "imagen", "id_proveedor"];
+
+    public function proveedor()
+    {
+        return $this->belongsTo("App\Proveedor", "id_proveedor");
+    }
 }

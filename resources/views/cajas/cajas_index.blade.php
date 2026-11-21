@@ -1,89 +1,69 @@
 @extends("maestra")
 @section("titulo", "Cajas")
 @section("contenido")
-<br>
-<div class="row">
-    <div class="col-12">
-        <div class="row">
-            <div style="padding: 20px;" class="col-lg-3">
-                <div class="card_ventas" style="background-color: rgb(6, 139, 247);">
-                    <div style="width: 100%">
-                        <h3><strong>Total Vendido (Hoy)</strong></h3>
-                    </div> 
-                    <h1>$ {{ number_format($totalVendidoHoy, 2) }}</h1>
-                    <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-donate"></i>
-                </div>
-            </div>
-            <div style="padding: 20px;" class="col-lg-3">
-                <div class="card_ventas" style="background-color: rgb(4, 95, 1);">
-                    <div style="width: 100%">
-                        <h3><strong>Total Vendido (Mes)</strong></h3>
-                    </div> 
-                    <h1>$ {{ number_format($totalVendidoMensual, 2) }}</h1>
-                    <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-cash-register"></i>
-                </div>
-            </div>
-            <div style="padding: 20px;" class="col-lg-3">
-                <div class="card_ventas" style="background-color: rgb(247, 94, 6);">
-                    <div style="width: 100%">
-                        <h3><strong>Total fiado</strong></h3>
-                    </div> 
-                    <h1>$ {{ number_format($totalFiado, 2) }}</h1>
-                    <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-hand-holding-usd"></i>
-                </div>
-            </div>
-            <div style="padding: 20px;" class="col-lg-3">
-                <div class="card_ventas" style="background-color: rgb(247, 94, 6);">
-                    <div style="width: 100%">
-                        <h3><strong>Total Abonos</strong></h3>
-                    </div> 
-                    <h1>$ {{ number_format($totalAbonado, 2) }}</h1>
-                    <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-hand-holding-usd"></i>
-                </div>
-            </div>
+@php $maxMes = max(1, $cajas->max('total_ventas_mensual')); @endphp
+<div class="pagina pagina-media">
+    <div class="encabezado-pagina">
+        <div>
+            <h1 class="titulo-pagina">Cajas</h1>
+            <p class="subtitulo-pagina">Ventas de todas las cajas, {{ now()->locale('es')->isoFormat('MMMM [de] YYYY') }}</p>
         </div>
     </div>
-    <div class="col-12 mt-3">
-        <div class="card">
-            <div class="card-body">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr style="background-color:rgb(219, 237, 255); color: #000;">
-                            <th>Caja</th>
-                            <th>Total Ventas Mensual</th>
-                            <th>Total Ventas Hoy</th>
-                            <th>Total Fiado</th>   
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($cajas as $caja)
-                            <tr>
-                                <td>{{ $caja->name }}</td>
-                                <td>{{ number_format($caja->total_ventas_mensual, 2, ",", ".") }}</td>
-                                <td>{{ number_format($caja->total_ventas_hoy, 2, ",", ".") }}</td>
-                                <td>{{ number_format($caja->total_fiado, 2, ",", ".") }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+
+    <section class="inicio-cifras" aria-label="Resumen de todas las cajas">
+        <div class="inicio-cifra principal">
+            <span class="etiqueta">Vendido hoy</span>
+            <span class="valor cifra">{{ dinero($totalVendidoHoy) }}</span>
+            <span class="detalle">{{ $cajas->sum('ventas_hoy') }} ventas</span>
         </div>
-    </div>
-    <div class="col-12 row">
-        <div class="col-lg-9">
+        <div class="inicio-cifra">
+            <span class="etiqueta">Este mes</span>
+            <span class="valor cifra">{{ dinero($totalVendidoMensual) }}</span>
         </div>
-        <div style="padding: 20px;" class="col-lg-3">
-            <div class="card_ventas" style="background-color: rgb(247, 6, 6); position: relative;">
-                <div style="width: 100%">
-                    <h3><strong>Total por cobrar</strong></h3>
-                </div> 
-                <h1>$ {{ number_format($totalPorCobrar, 2, ",", ".") }}</h1>
-                <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-hand-holding-usd"></i>
-            </div>
-            <br>
-            <br>
-            <br>
+        <a class="inicio-cifra enlace" href="{{ route('usuarios.deudores') }}">
+            <span class="etiqueta">Por cobrar</span>
+            <span class="valor cifra">{{ dinero($totalPorCobrar) }}</span>
+            <span class="detalle">Fiado menos abonos</span>
+        </a>
+        <div class="inicio-cifra">
+            <span class="etiqueta">Abonado</span>
+            <span class="valor cifra">{{ dinero($totalAbonado) }}</span>
+            <span class="detalle">De {{ dinero($totalFiado) }} fiado</span>
         </div>
+    </section>
+
+    <div class="panel p-0 tabla-contenedor mt-4">
+        <table class="tabla-pos">
+            <thead>
+                <tr>
+                    <th>Caja</th>
+                    <th class="num">Hoy</th>
+                    <th>Este mes</th>
+                    <th class="num">Fiado en esta caja</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach($cajas as $caja)
+                <tr>
+                    <td>
+                        <div class="producto-celda">
+                            <span class="barra-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($caja->name, 0, 1)) }}</span>
+                            <span class="producto-texto"><strong>{{ $caja->name }}</strong><small>{{ $caja->email }}</small></span>
+                        </div>
+                    </td>
+                    <td class="num">
+                        <strong>{{ dinero($caja->total_ventas_hoy) }}</strong>
+                        <small class="d-block text-muted">{{ $caja->ventas_hoy }} ventas</small>
+                    </td>
+                    <td class="celda-barra">
+                        <span class="cifra"><strong>{{ dinero($caja->total_ventas_mensual) }}</strong></span>
+                        <span class="barra-proporcion" aria-hidden="true"><span style="width: {{ round($caja->total_ventas_mensual / $maxMes * 100) }}%"></span></span>
+                    </td>
+                    <td class="num">{{ dinero($caja->total_fiado) }}</td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
     </div>
 </div>
 @endsection

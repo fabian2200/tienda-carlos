@@ -8,82 +8,63 @@ use Illuminate\Http\Request;
 class ClientesController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Listado con el número de ventas de cada cliente (para advertir antes de eliminar).
      */
     public function index()
     {
-        return view("clientes.clientes_index", ["clientes" => Cliente::all()]);
+        $clientes = Cliente::select("clientes.*")
+            ->selectRaw("(SELECT COUNT(*) FROM ventas WHERE ventas.id_cliente = clientes.id) as numero_ventas")
+            ->orderBy("nombre")
+            ->get();
+
+        return view("clientes.clientes_index", ["clientes" => $clientes]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
         return view("clientes.clientes_create");
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        (new Cliente($request->input()))->saveOrFail();
-        return redirect()->route("clientes.index")->with("mensaje", "Cliente agregado");
+        $datos = $this->validar($request);
+        $cliente = new Cliente($datos);
+        $cliente->saveOrFail();
+        return redirect()->route("clientes.index")
+            ->with("mensaje", "Cliente agregado: " . $cliente->nombre)
+            ->with("tipo", "success");
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param \App\Cliente $cliente
-     * @return \Illuminate\Http\Response
-     */
     public function show(Cliente $cliente)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param \App\Cliente $cliente
-     * @return \Illuminate\Http\Response
-     */
     public function edit(Cliente $cliente)
     {
         return view("clientes.clientes_edit", ["cliente" => $cliente]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Cliente $cliente
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, Cliente $cliente)
     {
-        $cliente->fill($request->input());
+        $cliente->fill($this->validar($request));
         $cliente->saveOrFail();
-        return redirect()->route("clientes.index")->with("mensaje", "Cliente actualizado");
+        return redirect()->route("clientes.index")
+            ->with("mensaje", "Cliente actualizado: " . $cliente->nombre)
+            ->with("tipo", "success");
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param \App\Cliente $cliente
-     * @return \Illuminate\Http\Response
-     */
     public function destroy(Cliente $cliente)
     {
         $cliente->delete();
-        return redirect()->route("clientes.index")->with("mensaje", "Cliente eliminado");
+        return redirect()->route("clientes.index")->with("mensaje", "Cliente eliminado")->with("tipo", "success");
+    }
+
+    private function validar(Request $request)
+    {
+        return $request->validate([
+            "nombre" => "required|string|max:255",
+            "telefono" => "required|string|max:255",
+        ], [], ["telefono" => "teléfono"]);
     }
 }

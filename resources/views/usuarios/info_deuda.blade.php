@@ -1,80 +1,78 @@
 @extends("maestra")
-@section("titulo", "Usuarios")
+@section("titulo", "Deuda de " . $cliente->nombre)
 @section("contenido")
-<br>
-<div class="row">
-    <div class="col-12">
-        <div class="row" style="padding-left: 5%; padding-right: 5%">
-            <div class="col-lg-5" style="display: flex; align-items: center">
-                <h3><i class="fas fa-user"></i> Cliente: <span style="color: green">{{ $cliente->nombre }}</span>  </h3>
-            </div>
-            <div class="col-lg-4" style="display: flex; align-items: center">
-                <h3 style="color: red; font-weight: bold">Deuda total:  ${{number_format($cliente->total_deuda, 2)}}</h3>
-            </div>
-            <div class="col-lg-3">
-                <button onclick="ImprimirDeuda({{$cliente->id}})" style="font-size: 20px; width: 100%" class="btn btn-success">Imprimir deuda</button>
-            </div>
+<div class="pagina pagina-angosta">
+    <div class="encabezado-pagina">
+        <div>
+            <a class="volver" href="{{ route('usuarios.deudores') }}"><i class="fas fa-arrow-left" aria-hidden="true"></i> Fiados</a>
+            <h1 class="titulo-pagina">{{ $cliente->nombre }}</h1>
+            <p class="subtitulo-pagina">{{ count($facturas_deudas) }} {{ count($facturas_deudas) == 1 ? 'venta fiada' : 'ventas fiadas' }}</p>
         </div>
-               <hr>
-        @include("notificacion")
-        <div class="table-responsive">
-           @foreach ($facturas_deudas as $item)
-            <div style="padding-left: 15%; padding-right: 15%">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <h2 style="color: rgb(42, 54, 165); font-weight: bold; margin-bottom: 0px">Factura # {{$item->id}}</h2>
-                        <h6 style="color: rgb(4, 6, 22); font-weight: bold">Fecha: {{Carbon\Carbon::parse($item->created_at)->format('d/m/Y H:i:s A')}}</h6>
-                        <h4 style="color: rgb(165, 42, 42); font-weight: bold">Total Fiado en esta factura $ {{$item->total_fiado}}</h4>
-                    </div>
-                </div>
-                <br>
-                <table style="width: 100%">
-                    <tr style="background-color: aquamarine">
-                        <th style="width: 40%">Producto</th>
-                        <th style="width: 30%">Cantidad</th>
-                        <th style="width: 30%">Precio</th>
-                    </tr>
-                    @foreach ($item->productos as $item2)
-                        <tr>
-                            <td>{{$item2->descripcion}}</td>
-                            <td>{{$item2->cantidad}} {{$item2->unidad}}</td>
-                            <td>$ {{$item2->precio}}</td>
-                        </tr>
-                    @endforeach
-                    <tr style="background-color: aquamarine">
-                        <th colspan="2">Total Factura</th>
-                        <th>$ {{ $item->total_pagar }}</th>
-                    </tr>
-                </table>
-                <br>
-                <hr>
-                <br>
-            </div>
-           @endforeach
-           <div class="row" style="width: 100%; padding-left: 15%; padding-right: 15%">
-                <div class="col-lg-6">
-                    <h2 style="color: rgb(250, 0, 0); font-weight: bold">&nbsp;&nbsp;Total Fiado ${{$cliente->total_fiado}}</h2>
-                    <h2 style="color: rgb(11, 99, 33); font-weight: bold">- Total Abonado ${{$cliente->total_abonado}}</h2>
-                    <hr>
-                    <h2 style="color: rgb(2, 2, 2); font-weight: bold">&nbsp;&nbsp;&nbsp;Deuda Total ${{$cliente->total_deuda}}</h2>
-                </div>
-            </div>
+        <div class="encabezado-acciones">
+            <button type="button" class="btn btn-secondary" id="botonImprimirDeuda"><i class="fas fa-print" aria-hidden="true"></i> Imprimir estado de cuenta</button>
         </div>
     </div>
+
+    @include("notificacion")
+
+    <section class="inicio-cifras cifras-ventas" aria-label="Resumen de la deuda">
+        <div class="inicio-cifra principal">
+            <span class="etiqueta">Debe</span>
+            <span class="valor cifra">{{ dinero($cliente->total_deuda) }}</span>
+        </div>
+        <div class="inicio-cifra">
+            <span class="etiqueta">Fiado</span>
+            <span class="valor cifra">{{ dinero($cliente->total_fiado) }}</span>
+        </div>
+        <div class="inicio-cifra">
+            <span class="etiqueta">Abonado</span>
+            <span class="valor cifra">{{ dinero($cliente->total_abonado) }}</span>
+        </div>
+    </section>
+
+    @foreach($facturas_deudas as $venta)
+        @php $fecha = \Carbon\Carbon::parse($venta->created_at); @endphp
+        <article class="panel venta-fiada">
+            <header class="venta-fiada-cabecera">
+                <div>
+                    <a class="cifra venta-fiada-numero" href="{{ route('ventas.show', $venta->id) }}">Venta #{{ $venta->id }}</a>
+                    <span class="text-muted">{{ $fecha->format('d/m/Y h:i a') }}</span>
+                </div>
+                <div class="venta-fiada-montos">
+                    <span>Total <strong class="cifra">{{ dinero($venta->total_pagar) }}</strong></span>
+                    <span class="badge badge-warning">Fiado {{ dinero($venta->total_fiado) }}</span>
+                </div>
+            </header>
+            <div class="tabla-contenedor">
+                <table class="tabla-pos tabla-compacta">
+                    <thead>
+                        <tr><th>Producto</th><th class="num">Cantidad</th><th class="num">Precio</th><th class="num">Subtotal</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach($venta->productos as $producto)
+                            <tr>
+                                <td>{{ $producto->descripcion }}</td>
+                                <td class="num">{{ cantidad($producto->cantidad, 3) }} {{ strtolower($producto->unidad) }}</td>
+                                <td class="num">{{ dinero($producto->precio) }}</td>
+                                <td class="num">{{ dinero(round($producto->cantidad * $producto->precio / 100) * 100) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    @endforeach
 </div>
-<br>
-<br>
-<br>
-<br>
+
 <script>
-    function ImprimirDeuda(id_cliente){
-        $.ajax({
-            url: '/imprimir-deuda?id_cliente='+id_cliente,
-            type: 'GET',
-            success: function(response) {
-                alert(response.mensaje);
-            }
-        });
-    }
+document.getElementById("botonImprimirDeuda").addEventListener("click", function () {
+    const b = this;
+    b.disabled = true;
+    const aviso = (t, i) => Swal.fire({ toast: true, position: "top-end", icon: i, title: t, showConfirmButton: false, timer: 3500, timerProgressBar: true, customClass: { popup: "aviso-pos" } });
+    $.get(@json(route('usuarios.ImprimirDeuda')), { id_cliente: {{ $cliente->id }} })
+        .then(() => aviso("Estado de cuenta enviado a la impresora.", "success"),
+              () => aviso("No se pudo imprimir. Revisa que la impresora esté encendida y conectada.", "error"))
+        .always(() => (b.disabled = false));
+});
 </script>
 @endsection

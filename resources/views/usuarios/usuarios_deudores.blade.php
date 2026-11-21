@@ -1,202 +1,163 @@
 @extends("maestra")
-@section("titulo", "Usuarios")
+@section("titulo", "Fiados")
 @section("contenido")
-<br>
-<div class="row">
-    <div class="col-12">
-        <div class="row">
-            <div class="col-lg-2">
-                <h1>Clientes Deudores  <i class="fas fa-hand-holding-usd"></i></h1>
-            </div>
-            <div class="col-lg-3">
-                <h1 style="color: red; font-weight: bold">Total fiado:  ${{number_format($total_fiado, 2)}}</h1>
-            </div>
-            <div class="col-lg-3">
-                <h1 style="color: green; font-weight: bold">Total abonado:  ${{number_format($total_abonado_clientes, 2)}}</h1>
-            </div>
-            <div class="col-lg-3">
-                <h1 style="color: blue; font-weight: bold">Total por cobrar:  ${{number_format($total_por_cobrar, 2)}}</h1>
-            </div>
+<div class="pagina">
+    <div class="encabezado-pagina">
+        <div>
+            <h1 class="titulo-pagina">Fiados</h1>
+            <p class="subtitulo-pagina"><span data-filtro-contador="#tablaDeudores">{{ count($clientes_deudores) }}</span> clientes deben dinero</p>
         </div>
-        <hr>
-        @include("notificacion")
-        <div class="table-responsive">
-            <table id="tabla_deudores" class="table table-bordered">
-                <thead style="background-color: #91baee">
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Total Fiado</th>
-                        <th>Total Abonado</th>
-                        <th>Deuda Total</th>
-                        <th style="text-align: center">Opciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach($clientes_deudores as $cliente)
-                    <tr>
-                        <td>{{$cliente->nombre}}</td>
-                        <td>${{number_format($cliente->total_fiado, 2)}}</td>
-                        <td>${{number_format($cliente->total_abonado, 2)}}</td>
-                        <td>${{number_format($cliente->total_deuda, 2)}}</td>
-                        <td style="display: flex; justify-content: space-evenly; align-items: center;">
-                            <button onclick="seleccionarCliente({{$cliente->id}}, '{{$cliente->nombre}}', {{$cliente->total_deuda}})" data-toggle="modal" data-target="#modalAbonar" class="btn btn-success">
-                                Abonar <i class="fas fa-hand-holding-usd"></i>
-                            </button>
-                            <a href="/info-deuda?id_cliente={{$cliente->id}}" class="btn btn-warning">
-                                Información <i class="fa fa-info"></i>
-                            </a>
-                        </td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
+    </div>
+
+    @include("notificacion")
+
+    <section class="inicio-cifras cifras-ventas" aria-label="Resumen de fiados">
+        <div class="inicio-cifra principal">
+            <span class="etiqueta">Por cobrar</span>
+            <span class="valor cifra">{{ dinero($total_por_cobrar) }}</span>
+            <span class="detalle">Fiado menos abonos</span>
         </div>
+        <div class="inicio-cifra">
+            <span class="etiqueta">Total fiado</span>
+            <span class="valor cifra">{{ dinero($total_fiado) }}</span>
+            <span class="detalle">En ventas aún sin pagar</span>
+        </div>
+        <div class="inicio-cifra">
+            <span class="etiqueta">Total abonado</span>
+            <span class="valor cifra">{{ dinero($total_abonado_clientes) }}</span>
+            <span class="detalle">Pagos parciales recibidos</span>
+        </div>
+    </section>
+
+    <div class="filtros">
+        <label class="filtro-buscar">
+            <span class="oculto">Buscar cliente</span>
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <input type="search" class="form-control" placeholder="Buscar cliente" data-filtrar-tabla="#tablaDeudores" autocomplete="off">
+        </label>
+    </div>
+
+    <div class="panel p-0 tabla-contenedor">
+        <table class="tabla-pos" id="tablaDeudores">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th class="num">Fiado</th>
+                    <th class="num">Abonado</th>
+                    <th class="num">Debe</th>
+                    <th class="acciones-titulo acciones-anchas"><span class="oculto">Acciones</span></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach($clientes_deudores as $cliente)
+                <tr>
+                    <td><a href="{{ route('usuarios.infoDeuda', ['id_cliente' => $cliente->id]) }}"><strong>{{ $cliente->nombre }}</strong></a></td>
+                    <td class="num">{{ dinero($cliente->total_fiado) }}</td>
+                    <td class="num">{{ dinero($cliente->total_abonado) }}</td>
+                    <td class="num"><strong class="texto-deuda">{{ dinero($cliente->total_deuda) }}</strong></td>
+                    <td class="acciones">
+                        <button type="button" class="btn btn-sm btn-primary js-abonar"
+                                data-id="{{ $cliente->id }}" data-nombre="{{ $cliente->nombre }}" data-deuda="{{ $cliente->total_deuda }}">
+                            Registrar abono
+                        </button>
+                        <a class="btn-accion" href="{{ route('usuarios.infoDeuda', ['id_cliente' => $cliente->id]) }}" title="Ver el detalle de la deuda" aria-label="Ver el detalle de la deuda de {{ $cliente->nombre }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
+                    </td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+        <p class="tabla-vacia" data-filtro-vacio="#tablaDeudores" hidden>Ningún cliente con ese nombre debe dinero.</p>
+        @if(count($clientes_deudores) === 0)
+            <p class="tabla-vacia">Nadie debe dinero en este momento.</p>
+        @endif
     </div>
 </div>
-<br>
-<br>
-<br>
-<br>
 
-<div class="modal fade" id="modalAbonar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 class="modal-title" id="exampleModalLabel">Abonar a deuda</h3>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <form id="form_abonar" style="font-size: 16px !important" method="POST" action="{{route("usuarios.abonar")}}">
+<div class="modal fade" id="modalAbonar" tabindex="-1" role="dialog" aria-labelledby="tituloAbono" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <form class="modal-content" id="formAbonar" autocomplete="off">
             @csrf
+            <input type="hidden" name="id_cliente" id="abonoCliente">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="tituloAbono">Registrar abono</h2>
+                    <p class="modal-subtitulo" id="abonoNombre"></p>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+            </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label for="cliente">Cliente</label>
-                    <input type="hidden"  id="id_cliente" name="id_cliente" class="form-control" placeholder="Total a abonar">
-                    <input type="text" disabled id="cliente" name="cliente" class="form-control" placeholder="Total a abonar">
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <span class="etiqueta-campo">Debe</span>
+                        <div class="valor-calculado valor-deuda cifra" id="abonoDeuda"></div>
+                    </div>
+                    <div class="form-group col-6">
+                        <span class="etiqueta-campo">Quedará debiendo</span>
+                        <div class="valor-calculado cifra" id="abonoRestante"></div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="total_abonar">Total de la deuda</label>
-                    <input type="number" disabled id="total_deuda" name="total_deuda" class="form-control" placeholder="Total a abonar">
+                <div class="form-group mb-1">
+                    <label for="abonoValor">Valor del abono</label>
+                    <input class="form-control input-grande cifra" id="abonoValor" inputmode="numeric" required placeholder="$ 0">
+                    <input type="hidden" name="total_abonar" id="abonoValorNumero">
                 </div>
-                <div class="form-group">
-                    <label for="total_abonar">Total del abono</label>
-                    <input required oninput="calcularDeudaRestante(this)" type="number" id="total_abonar" name="total_abonar" class="form-control" placeholder="Total a abonar">
-                </div>
-                <div class="form-group">
-                    <label for="total_deuda_restante">Total deuda restante</label>
-                    <input type="number" disabled id="total_deuda_restante" name="total_deuda_restante" class="form-control" placeholder="Total a abonar">
-                </div>
+                <button type="button" class="btn btn-link px-0" id="abonoTodo">Paga todo lo que debe</button>
             </div>
             <div class="modal-footer">
-                <button type="button" onclick="abonar()" class="btn btn-success">Abonar</button>
-                <a style="color: white" class="btn btn-danger" data-dismiss="modal">Cerrar</a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="abonoGuardar">Registrar abono</button>
             </div>
         </form>
-      </div>
     </div>
-  </div>
+</div>
 
 <script>
-    $('#tabla_deudores').DataTable({
-        "order": [[3, 'desc']],
-        language: {
-            "decimal": "",
-            "emptyTable": "No hay información",
-            "info": "Mostrando _START_ a _END_ de _TOTAL_ Clientes",
-            "infoEmpty": "Mostrando 0 to 0 of 0 Clientes",
-            "infoFiltered": "(Filtrado de _MAX_ total Clientes)",
-            "infoPostFix": "",
-            "thousands": ",",
-            "lengthMenu": "Mostrar _MENU_ Clientes",
-            "loadingRecords": "Cargando...",
-            "processing": "Procesando...",
-            "search": "Buscar:",
-            "zeroRecords": "Sin resultados encontrados",
-            "paginate": {
-                "first": "Primero",
-                "last": "Ultimo",
-                "next": "Siguiente",
-                "previous": "Anterior"
-            }
-        }
-    });
+(function () {
+    const $c = id => document.getElementById(id);
+    const pesos = n => "$ " + Math.round(Number(n) || 0).toLocaleString("es-CO");
+    const digitos = t => Number(String(t || "").replace(/\D/g, "")) || 0;
+    let deuda = 0;
 
-    valor_deuda = 0;
-
-    function seleccionarCliente(id_cliente, cliente, total_deuda){
-        valor_deuda = total_deuda;
-        setTimeout(() => {
-            document.getElementById("id_cliente").value = id_cliente;
-            document.getElementById("cliente").value = cliente;
-            document.getElementById("total_deuda").value = total_deuda;
-        }, 500);
+    function recalcular() {
+        const v = digitos($c("abonoValor").value);
+        $c("abonoValor").value = v ? v.toLocaleString("es-CO") : "";
+        $c("abonoValorNumero").value = v;
+        $c("abonoRestante").textContent = pesos(Math.max(0, deuda - v));
+        $c("abonoValor").classList.toggle("is-invalid", v > Math.round(deuda));
     }
 
-    function calcularDeudaRestante(element){
-        var deuda_restante = valor_deuda - element.value;
-        document.getElementById("total_deuda_restante").value = deuda_restante;
-    }
+    document.querySelectorAll(".js-abonar").forEach(b => b.addEventListener("click", () => {
+        deuda = Number(b.dataset.deuda) || 0;
+        $c("abonoCliente").value = b.dataset.id;
+        $c("abonoNombre").textContent = b.dataset.nombre;
+        $c("abonoDeuda").textContent = pesos(deuda);
+        $c("abonoValor").value = "";
+        recalcular();
+        $("#modalAbonar").modal("show");
+    }));
+    $("#modalAbonar").on("shown.bs.modal", () => $c("abonoValor").focus());
+    $c("abonoValor").addEventListener("input", recalcular);
+    $c("abonoTodo").addEventListener("click", () => { $c("abonoValor").value = Math.round(deuda); recalcular(); $c("abonoGuardar").focus(); });
 
-    function abonar(){
-        var valor_maximo_abonar = parseFloat(document.getElementById("total_deuda").value);
-        var valor_abonar = parseFloat(document.getElementById("total_abonar").value);
-        if(valor_abonar > valor_maximo_abonar){
-            Swal.fire({
-                title: "Atención",
-                text: "El valor a abonar no puede ser mayor al valor de la deuda",
-                icon: "warning",
-                buttons: false,
-            });
+    $c("formAbonar").addEventListener("submit", e => {
+        e.preventDefault();
+        const v = digitos($c("abonoValor").value);
+        if (!v) return $c("abonoValor").focus();
+        if (v > Math.round(deuda)) {
+            Swal.fire({ icon: "warning", title: "El abono es mayor que la deuda", text: "Este cliente debe " + pesos(deuda) + "." });
             return;
         }
-
-        var formData = new FormData(document.getElementById("form_abonar"));
-        $.ajax({
-            url: "{{route('usuarios.abonar')}}",
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            beforeSend: function(){
-                Swal.fire({
-                    title: "Abonando...",
-                    text: "Espere un momento...",
-                    icon: "info",
-                    showConfirmButton: false,
-                    buttons: false,
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    allowEnterKey: false,
-                    allowTabKey: false,
-                    allowShiftTabKey: false,
-                    allowCtrlTabKey: false,
-                    allowCtrlShiftTabKey: false,
-                    allowCtrlShiftTabKey: false,
-                });
-            },
-            success: function(response){
-                Swal.fire({
-                    title: "Atención",
-                    text: response.mensaje,
-                    icon: "success",
-                    buttons: false,
-                    allowOutsideClick: false,
-                    timer: 3000,
-                });
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
-            },
-            error: function(xhr, status, error){
-                Swal.fire({
-                    title: "Error",
-                    text: xhr.responseText,
-                    icon: "error",
-                    buttons: false,
-                });
-            }
-        });
-    }
+        $c("abonoGuardar").disabled = true;
+        $.post(@json(route('usuarios.abonar')), $($c("formAbonar")).serialize())
+            .then(r => {
+                $("#modalAbonar").modal("hide");
+                Swal.fire({ icon: "success", title: "Abono registrado", text: pesos(v) + " de " + $c("abonoNombre").textContent + ".", showConfirmButton: false, timer: 1800 });
+                setTimeout(() => location.reload(), 1800);
+            }, () => {
+                Swal.fire({ icon: "error", title: "No se pudo registrar el abono", text: "Revisa la conexión e inténtalo de nuevo." });
+                $c("abonoGuardar").disabled = false;
+            });
+    });
+})();
 </script>
 @endsection

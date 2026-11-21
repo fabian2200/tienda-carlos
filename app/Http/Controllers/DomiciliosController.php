@@ -6,6 +6,7 @@ use App\Cliente;
 use App\Producto;
 use App\ProductoVendido;
 use App\Venta;
+use App\Services\TicketService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\VentasController;
 use Illuminate\Support\Facades\Auth;
@@ -150,18 +151,8 @@ class DomiciliosController extends Controller
     {
         $venta = Venta::findOrFail($idVenta);
         if($imprimir_factura == "si"){
-            $nombreImpresora = env("NOMBRE_IMPRESORA");
-            $connector = new WindowsPrintConnector($nombreImpresora);
-            $impresora = new Printer($connector);
-            $impresora->setJustification(Printer::JUSTIFY_CENTER);
-            $impresora->setEmphasis(true);
-            $impresora->text("Ticket de venta\n");
-            $impresora->text("Provisiones Carlos Andres\n");
-            $impresora->text("NIT 12435619\n");
-            $impresora->text("CRA 15 #13B Bis - 62\n");
-            $impresora->text("Brr. Alfonso Lopez\n");
-            $impresora->text($venta->created_at . "\n");
-            $impresora->setEmphasis(false);
+            $impresora = TicketService::impresora();
+            TicketService::encabezado($impresora, "Ticket de venta", $venta->created_at);
             $impresora->text("Cliente: ");
             $impresora->text($venta->cliente->nombre . "\n");
             $impresora->text("Vendido por: " . $venta->usuario->name . "\n");
@@ -196,10 +187,7 @@ class DomiciliosController extends Controller
             $impresora->text("\n===============================\n");
             $impresora->text("Pago: $" . self::redondearAl100($venta->total_dinero) . "\n");
             $impresora->text("Vueltos: $" . self::redondearAl100($venta->total_vueltos) . "\n");
-            $impresora->setJustification(Printer::JUSTIFY_CENTER);
-            $impresora->setTextSize(1, 1);
-            $impresora->text("Gracias por su compra\n");
-            $impresora->text("\nVentSOFT By Ing. Fabian Quintero\n");
+            TicketService::pie($impresora);
             $impresora->feed(10);
             $impresora->pulse();
             $impresora->close();

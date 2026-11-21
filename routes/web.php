@@ -34,12 +34,15 @@ Route::post('/register', 'AuthController@registerStore')->name('register.store')
 Route::middleware("auth")
     ->group(function () {
         Route::resource("clientes", "ClientesController");
+        Route::resource("proveedores", "ProveedoresController")->parameters(["proveedores" => "proveedor"]);
         Route::resource("usuarios", "UserController")->parameters(["usuarios" => "user"]);
         Route::resource("productos", "ProductosController");
+        Route::get("/productos/{producto}/imagen", "ProductosController@imagen")->name("productos.imagen");
         Route::get("/usuarios-deudores", "UserController@deudores")->name("usuarios.deudores");
         Route::post("/usuarios-abonar", "UserController@abonar")->name("usuarios.abonar");
         Route::get("/ventas/ticket", "VentasController@ticket")->name("ventas.ticket");
         Route::resource("ventas", "VentasController");
+        Route::get("/ventas/{venta}/pdf", "VentasController@pdf")->name("ventas.pdf");
         Route::get("/vender", "VenderController@index")->name("vender.index");
         Route::post("/productoDeVenta", "VenderController@agregarProductoVenta")->name("agregarProductoVenta");
         Route::delete("/productoDeVenta", "VenderController@quitarProductoDeVenta")->name("quitarProductoDeVenta");
@@ -54,6 +57,8 @@ Route::middleware("auth")
         Route::get("/productos-alert", "ProductosController@alert")->name("productos.alert");
        
         Route::get("/compras", "ComprasController@index")->name("compras.index");
+        Route::get("/compras/nueva", "ComprasController@create")->name("compras.create");
+        Route::get("/compras/{compra}", "ComprasController@show")->where("compra", "[0-9]+")->name("compras.show");
         Route::post("/registrar-compra", "ComprasController@guardarCompra")->name("compras.guardarCompra");
         Route::post("/compras-eliminar", "ComprasController@eliminarCompra")->name("compras.eliminar");
     
@@ -69,6 +74,9 @@ Route::middleware("auth")
         Route::post("/terminarVentaDomicilio", "DomiciliosController@terminarVentaDomicilio")->name("terminarVentaDomicilio");
 
         Route::get("/cajas", "CajasController@index")->name("cajas.index");
+
+        Route::get("/negocio", "NegocioController@edit")->name("negocio.edit");
+        Route::put("/negocio", "NegocioController@update")->name("negocio.update");
     }
 );
 

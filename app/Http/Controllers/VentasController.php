@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ResumenVentasService;
+use App\Services\TicketService;
 use App\Venta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,18 +23,8 @@ class VentasController extends Controller
         define('EURO',chr(36));
 
         if($imprimir_factura == "si"){
-            $nombreImpresora = env("NOMBRE_IMPRESORA");
-            $connector = new WindowsPrintConnector($nombreImpresora);
-            $impresora = new Printer($connector);
-            $impresora->setJustification(Printer::JUSTIFY_CENTER);
-            $impresora->setEmphasis(true);
-            $impresora->text("Ticket de venta\n");
-            $impresora->text("Provisiones Carlos Andres\n");
-            $impresora->text("NIT 12435619\n");
-            $impresora->text("CRA 15 #13B Bis - 62\n");
-            $impresora->text("Brr. Alfonso Lopez\n");
-            $impresora->text($venta->created_at . "\n");
-            $impresora->setEmphasis(false);
+            $impresora = TicketService::impresora();
+            TicketService::encabezado($impresora, "Ticket de venta", $venta->created_at);
             $impresora->text("Cliente: ");
             $impresora->text($venta->cliente->nombre . "\n");
             $impresora->text("Vendido por: " . $venta->usuario->name . "\n");
@@ -60,10 +52,7 @@ class VentasController extends Controller
             $impresora->setEmphasis(true);
             $impresora->setTextSize(3, 3); 
             $impresora->text("Total: $" . self::redondearAl100($total) . "\n");
-            $impresora->setJustification(Printer::JUSTIFY_CENTER);
-            $impresora->setTextSize(1, 1);
-            $impresora->text("Gracias por su compra\n");
-            $impresora->text("\nVentSOFT By Ing. Fabian Quintero\n");
+            TicketService::pie($impresora);
             $impresora->feed(10);
             $impresora->pulse();
             $impresora->close();
@@ -78,18 +67,8 @@ class VentasController extends Controller
         
         $venta = Venta::findOrFail($idVenta);
 
-        $nombreImpresora = env("NOMBRE_IMPRESORA");
-        $connector = new WindowsPrintConnector($nombreImpresora);
-        $impresora = new Printer($connector);
-        $impresora->setJustification(Printer::JUSTIFY_CENTER);
-        $impresora->setEmphasis(true);
-        $impresora->text("Ticket de venta\n");
-        $impresora->text("Provisiones Carlos Andres\n");
-        $impresora->text("NIT 12435619\n");
-        $impresora->text("CRA 15 #13B Bis - 62\n");
-        $impresora->text("Brr. Alfonso Lopez\n");
-        $impresora->text($venta->created_at . "\n");
-        $impresora->setEmphasis(false);
+        $impresora = TicketService::impresora();
+        TicketService::encabezado($impresora, "Ticket de venta", $venta->created_at);
         $impresora->text("Cliente: ");
         $impresora->text($venta->cliente->nombre . "\n");
         $impresora->text("Vendido por: " . $venta->usuario->name . "\n");
@@ -123,10 +102,7 @@ class VentasController extends Controller
         }else{
             $impresora->text("Total: $" . self::redondearAl100($total) . "\n");
         }
-        $impresora->setJustification(Printer::JUSTIFY_CENTER);
-        $impresora->setTextSize(1, 1);
-        $impresora->text("Gracias por su compra\n");
-        $impresora->text("\nVentSOFT By Ing. Fabian Quintero\n");
+        TicketService::pie($impresora);
         $impresora->feed(10);
         $impresora->pulse();
         $impresora->close();
@@ -138,80 +114,51 @@ class VentasController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Ventas de la caja que inició sesión. Une el antiguo "Ventas" y "Ventas por fecha":
+     * filtros opcionales ?fecha1=Y-m-d&fecha2=Y-m-d&cliente=id, 50 por página.
+     * Las cifras se calculan en SQL con ResumenVentasService (mismos resultados que antes).
      */
-    public function index()
-    {        
-        $ventasConTotales = Venta::join("clientes", "clientes.id", "ventas.id_cliente")
-            ->select("ventas.*", "clientes.nombre as cliente")
-            ->orderBy("ventas.created_at", "DESC")
-            ->where("ventas.id_usuario", Auth::user()->id)
-            ->get();
+    public function index(Request $request, ResumenVentasService $resumen)
+    {
+        $idUsuario = Auth::id();
+        $esFecha = function ($valor) { return is_string($valor) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $valor); };
 
-        
-        $totalVendido = 0;
-        
-        $mes_actual = date('m');
-        $anio_actual = date('Y');
-        foreach ($ventasConTotales as $item) {
-            $mes_factura = explode("-", $item->fecha_venta)[1];
-            $anio_factura = explode("-", $item->fecha_venta)[0];
-            if($mes_actual == $mes_factura && $anio_actual == $anio_factura){
-                $totalVendido += $item->total_pagar;
-            }
+        $fecha1 = $esFecha($request->input("fecha1")) ? $request->input("fecha1") : null;
+        $fecha2 = $esFecha($request->input("fecha2")) ? $request->input("fecha2") : null;
+        if ($fecha1 && !$fecha2) { $fecha2 = $fecha1; }
+        if ($fecha2 && !$fecha1) { $fecha1 = $fecha2; }
+        if ($fecha1 && $fecha1 > $fecha2) { [$fecha1, $fecha2] = [$fecha2, $fecha1]; }
+        $idCliente = (int) $request->input("cliente") ?: null;
+
+        $consulta = Venta::join("clientes", "clientes.id", "ventas.id_cliente")
+            ->where("ventas.id_usuario", $idUsuario);
+        if ($fecha1) {
+            $consulta->whereBetween("ventas.fecha_venta", [$fecha1, $fecha2]);
+        }
+        if ($idCliente) {
+            $consulta->where("ventas.id_cliente", $idCliente);
         }
 
-        $fiado = 0;
-        $abonado = 0;
+        $filtrando = $fecha1 || $idCliente;
+        $totalFiltro = $filtrando ? (float) (clone $consulta)->sum("ventas.total_pagar") : null;
 
-        $resultado = Cliente::join("fiados", "clientes.id", "=", "fiados.id_cliente")
-        ->join("ventas", "ventas.id", "=", "fiados.id_factura")
-        ->selectRaw("clientes.*, SUM(fiados.total_fiado) as total_fiado")
-        ->groupBy('clientes.id')
-        ->get();
-
-
-        foreach ($resultado as $item) {
-            $abonado_cliente = Cliente::join("abonos_fiados", "clientes.id", "=", "abonos_fiados.id_cliente")
-            ->selectRaw("clientes.id, SUM(abonos_fiados.valor_abonado) as total_abonado")
-            ->where("clientes.id", $item->id)
-            ->groupBy('clientes.id')
-            ->get();
-
-            if(count($abonado_cliente) == 0){
-                $total_abonado = 0;
-            }else{
-                $total_abonado = (double) $abonado_cliente[0]->total_abonado;
-            }
-
-            $abonado = $abonado + $total_abonado;
-            $fiado = $fiado + $item->total_fiado;
-
-        }
-      
-        $totalFiado = $fiado - $abonado;
-
-
-        $hoy = date("Y-m-d");
-        $totalVendidoHoy = Venta::join("clientes", "clientes.id", "ventas.id_cliente")
-        ->where("ventas.fecha_venta", $hoy)
-        ->where("ventas.id_usuario", Auth::user()->id)
-        ->sum("ventas.total_pagar");
-
-        $primeros100 = Venta::join("clientes", "clientes.id", "ventas.id_cliente")
-            ->select("ventas.*", "clientes.nombre as cliente")
+        $ventas = $consulta->select("ventas.*", "clientes.nombre as cliente")
             ->orderBy("ventas.created_at", "DESC")
-            ->limit(100)
-            ->where("ventas.id_usuario", Auth::user()->id)
-            ->get();
-            
+            ->paginate(50)
+            ->appends($request->only(["fecha1", "fecha2", "cliente"]));
+
         return view("ventas.ventas_index", [
-            "ventas" => $primeros100, 
-            "totalVendido" => $totalVendido,
-            "totalFiado" => $totalFiado,
-            "totalVendidoHoy" => $totalVendidoHoy
+            "ventas" => $ventas,
+            "totalVendidoHoy" => $resumen->vendidoEnFecha($idUsuario, date("Y-m-d")),
+            "ventasHoy" => $resumen->numeroVentasEnFecha($idUsuario, date("Y-m-d")),
+            "totalVendido" => $resumen->vendidoEnMes($idUsuario, date("Y-m")),
+            "totalFiado" => $resumen->fiadoPendiente(),
+            "filtrando" => $filtrando,
+            "totalFiltro" => $totalFiltro,
+            "fecha1" => $fecha1,
+            "fecha2" => $fecha2,
+            "idCliente" => $idCliente,
+            "clientes" => Cliente::orderBy("nombre")->get(["id", "nombre"]),
         ]);
     }
 
@@ -237,21 +184,42 @@ class VentasController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param \App\Venta $venta
-     * @return \Illuminate\Http\Response
+     * Detalle de una venta con aspecto de factura (encabezado desde la tabla `negocio`).
      */
     public function show(Venta $venta)
     {
-        $total = 0;
+        return view("ventas.ventas_show", $this->datosFactura($venta));
+    }
+
+    /**
+     * La misma factura en PDF.
+     */
+    public function pdf(Venta $venta)
+    {
+        $pdf = \PDF::loadView("ventas.ventas_pdf", $this->datosFactura($venta))->setPaper("letter");
+        // Solo las letras usadas de la fuente (si no, cada PDF lleva la fuente completa: ~880 KB)
+        $pdf->getDomPDF()->set_option("enable_font_subsetting", true);
+        return $pdf->download("venta-" . $venta->id . ".pdf");
+    }
+
+    /**
+     * Subtotal: suma de cada línea redondeada a 100, igual que el ticket impreso.
+     */
+    private function datosFactura(Venta $venta)
+    {
+        $subtotal = 0;
         foreach ($venta->productos as $producto) {
-            $total += $producto->cantidad * $producto->precio;
+            $producto->subtotal = self::redondearAl100($producto->cantidad * $producto->precio);
+            $subtotal += $producto->subtotal;
         }
-        return view("ventas.ventas_show", [
+        $domicilio = (float) $venta->precio_domi;
+
+        return [
             "venta" => $venta,
-            "total" => $total,
-        ]);
+            "subtotal" => $subtotal,
+            "domicilio" => $domicilio,
+            "total" => self::redondearAl100($subtotal + $domicilio),
+        ];
     }
 
     /**
@@ -290,36 +258,11 @@ class VentasController extends Controller
             ->with("mensaje", "Venta eliminada");
     }
 
+    /**
+     * Ruta antigua "Ventas por fecha": ahora es un filtro del listado de ventas.
+     */
     public function ventasPorFecha(Request $request)
     {
-
-        $idUsuario = Auth::user()->id;
-
-        $fecha1 = $request->input("fecha1");
-        $fecha2 = $request->input("fecha2");
-
-
-        $ventasConTotales = Venta::join("clientes", "clientes.id", "ventas.id_cliente")
-        ->select("ventas.*", "clientes.nombre as cliente")
-        ->whereBetween("ventas.fecha_venta", [$fecha1, $fecha2])
-        ->orderBy("ventas.fecha_venta", "ASC")
-        ->where("ventas.id_usuario", $idUsuario)
-        ->get();
-
-    
-        $totalVendido = 0;
-    
-       
-        
-        foreach ($ventasConTotales as $item) {
-            $mes_factura = explode("-", $item->fecha_venta)[1];
-            $anio_factura = explode("-", $item->fecha_venta)[0];
-            $totalVendido += $item->total_pagar;
-        }
-            
-        return view("ventas.ventas_mes", [
-            "ventas" => $ventasConTotales, 
-            "totalVendido" => $totalVendido,
-        ]);
+        return redirect()->route("ventas.index", $request->only(["fecha1", "fecha2"]));
     }
 }
