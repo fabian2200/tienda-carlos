@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\FiadosService;
 use App\Services\ResumenVentasService;
 use App\Services\TicketService;
 use App\Venta;
@@ -253,9 +254,19 @@ class VentasController extends Controller
      */
     public function destroy(Venta $venta)
     {
-        $venta->delete();
-        return redirect()->route("ventas.index")
-            ->with("mensaje", "Venta eliminada");
+        // La venta y su fiado se borran juntos; si el cliente ya había abonado
+        // lo suficiente, queda a paz y salvo (FiadosService::quitarFiadoDeVenta)
+        $deMas = DB::transaction(function () use ($venta) {
+            $deMas = app(FiadosService::class)->quitarFiadoDeVenta($venta->id);
+            $venta->delete();
+            return $deMas;
+        });
+
+        $mensaje = "Venta eliminada";
+        if ($deMas >= FiadosService::TOLERANCIA) {
+            $mensaje .= ". El cliente había abonado " . dinero($deMas) . " más de lo que ahora debe; quedó a paz y salvo.";
+        }
+        return redirect()->route("ventas.index")->with("mensaje", $mensaje);
     }
 
     /**

@@ -11,6 +11,7 @@ use App\Http\Controllers\VentasController;
 use DB;
 use App\Http\Controllers\DomiciliosController;
 use Illuminate\Support\Facades\Auth;
+use App\Services\FiadosService;
 
 class VenderController extends Controller
 {
@@ -25,48 +26,44 @@ class VenderController extends Controller
 
     public function terminarVenta(Request $request)
     {
-        $venta = new Venta();
-        $venta->id_cliente =  $request->input('id_cliente');
-        $venta->total_pagar =  $request->input('total_pagar');
-        $venta->total_dinero =  $request->input('total_dinero');
-        $venta->total_fiado =  $request->input('total_fiado');
-        $venta->total_vueltos =  $request->input('total_vueltos');
         $imprimir_factura = $request->input("imprimir_factura");
-        $venta->fecha_venta = date("Y-m-d");
-        $venta->id_usuario = Auth::user()->id;
-        $venta->saveOrFail();
-
-        if($venta->total_fiado > 0){
-            $this->guardarFiado($venta->id_cliente, $venta->id,  $venta->total_fiado);
-        }
-
-        $idVenta = $venta->id;
         $productos = $this->obtenerProductos();
 
-        $lista_productos = [];
-        foreach ($productos as $producto) {
-            $productoVendido = new ProductoVendido();
-            $productoVendido->fill([
-                "id_venta" => $idVenta,
-                "descripcion" => $producto->descripcion,
-                "codigo_barras" => $producto->codigo_barras,
-                "precio" => $producto->precio_venta,
-                "cantidad" => $producto->cantidad,
-                "unidad" => $producto->unidad_medida== "Kilos" ? "Kg" : ($producto->unidad_medida == "Libras" ? "Lb" : "Und")
-            ]);
-            $productoVendido->saveOrFail();
+        // Venta, fiado, productos y existencias se guardan juntos: si algo falla no queda nada a medias
+        $idVenta = DB::transaction(function () use ($request, $productos) {
+            $venta = new Venta();
+            $venta->id_cliente =  $request->input('id_cliente');
+            $venta->total_pagar =  $request->input('total_pagar');
+            $venta->total_dinero =  $request->input('total_dinero');
+            $venta->total_fiado =  $request->input('total_fiado');
+            $venta->total_vueltos =  $request->input('total_vueltos');
+            $venta->fecha_venta = date("Y-m-d");
+            $venta->id_usuario = Auth::user()->id;
+            $venta->saveOrFail();
 
-            $productoActualizado = Producto::find($producto->id);
-            $productoActualizado->existencia -= $productoVendido->cantidad;
-            $productoActualizado->saveOrFail();
+            app(FiadosService::class)->guardarFiado($venta->id_cliente, $venta->id, $venta->total_fiado);
 
+            foreach ($productos as $producto) {
+                $productoVendido = new ProductoVendido();
+                $productoVendido->fill([
+                    "id_venta" => $venta->id,
+                    "descripcion" => $producto->descripcion,
+                    "codigo_barras" => $producto->codigo_barras,
+                    "precio" => $producto->precio_venta,
+                    "cantidad" => $producto->cantidad,
+                    "unidad" => $producto->unidad_medida== "Kilos" ? "Kg" : ($producto->unidad_medida == "Libras" ? "Lb" : "Und")
+                ]);
+                $productoVendido->saveOrFail();
 
-            $lista_productos[] = [
-                "codigo_barras" => $productoActualizado->codigo_barras,
-                "existencia" => $productoActualizado->existencia
-            ];
-        }
+                $productoActualizado = Producto::find($producto->id);
+                $productoActualizado->existencia -= $productoVendido->cantidad;
+                $productoActualizado->saveOrFail();
+            }
 
+            return $venta->id;
+        });
+
+        // El ticket se imprime después de guardar: si falla la impresora, la venta ya quedó guardada
         $objeto = new VentasController();
         $myVariable = $objeto->ticket($idVenta, $imprimir_factura);
 
@@ -85,17 +82,6 @@ class VenderController extends Controller
         ]);
     }
 
-    public function guardarFiado($id_cliente, $id_factura, $total_fiado){
-        $datos = [
-            'id_cliente' => $id_cliente,
-            'id_factura' => $id_factura,
-            'total_fiado' => $total_fiado
-        ];
-
-        DB::connection('mysql')->table('fiados')->insert(
-            $datos 
-        );
-    }
 
     private function obtenerProductos()
     {

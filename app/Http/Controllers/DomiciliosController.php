@@ -6,6 +6,7 @@ use App\Cliente;
 use App\Producto;
 use App\ProductoVendido;
 use App\Venta;
+use App\Services\FiadosService;
 use App\Services\TicketService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\VentasController;
@@ -28,76 +29,81 @@ class DomiciliosController extends Controller
 
     public function terminarVentaDomicilio(Request $request)
     {
-        $venta = new Venta();
-       
-        $venta->total_pagar =  $request->input('total_pagar');
-        $venta->precio_domi =  $request->input('precio_domi');
-        $venta->total_dinero =  $request->input('total_dinero');
-        $venta->total_fiado =  $request->input('total_fiado');
-        $venta->total_vueltos =  $request->input('total_vueltos');
         $imprimir_factura = $request->input("imprimir_factura");
-        $venta->fecha_venta = date("Y-m-d");
-        $venta->id_usuario = Auth::user()->id;
-
-        $celular_cliente =  $request->input('celular_cliente');
-        $nombre_cliente =  $request->input('nombre_cliente');
         $direccion_cliente =  $request->input('direccion_cliente');
 
+        // Cliente, venta, fiado, productos y existencias se guardan juntos: si algo falla no queda nada a medias
+        [$idVenta, $lista_productos] = DB::transaction(function () use ($request) {
+            $venta = new Venta();
+       
+            $venta->total_pagar =  $request->input('total_pagar');
+            $venta->precio_domi =  $request->input('precio_domi');
+            $venta->total_dinero =  $request->input('total_dinero');
+            $venta->total_fiado =  $request->input('total_fiado');
+            $venta->total_vueltos =  $request->input('total_vueltos');
+            $venta->fecha_venta = date("Y-m-d");
+            $venta->id_usuario = Auth::user()->id;
 
-        $cliente = DB::connection('mysql')->table('clientes')
-        ->where('telefono', $celular_cliente)
-        ->first();
+            $celular_cliente =  $request->input('celular_cliente');
+            $nombre_cliente =  $request->input('nombre_cliente');
 
-        if($cliente == null){
-            $venta->id_cliente = DB::connection('mysql')->table('clientes')
-            ->insertGetId([
-                'telefono' => $celular_cliente,
-                'nombre' => $nombre_cliente            
-            ]);
-        }else{
-            $venta->id_cliente = $cliente->id;
-        }
 
-        $venta->saveOrFail();
+            $cliente = DB::connection('mysql')->table('clientes')
+            ->where('telefono', $celular_cliente)
+            ->first();
 
-        if($venta->total_fiado > 0){
-            $this->guardarFiado($venta->id_cliente, $venta->id,  $venta->total_fiado);
-        }
+            if($cliente == null){
+                $venta->id_cliente = DB::connection('mysql')->table('clientes')
+                ->insertGetId([
+                    'telefono' => $celular_cliente,
+                    'nombre' => $nombre_cliente            
+                ]);
+            }else{
+                $venta->id_cliente = $cliente->id;
+            }
 
-        $idVenta = $venta->id;
-        $productos = $request->input('productos');
+            $venta->saveOrFail();
 
-        $lista_productos = [];
-        foreach ($productos as $producto) {
-            $productoVendido = new ProductoVendido();
-            $productoVendido->fill([
-                "id_venta" => $idVenta,
-                "descripcion" => $producto["descripcion"],
-                "codigo_barras" => $producto["codigo_barras"],
-                "precio" => $producto["precio"],
-                "cantidad" => $producto["cantidad"],
-                "unidad" => $producto["unidad"] == "Kilos" ? "Kg" : ($producto["unidad"] == "Libras" ? "Lb" : "Und")
-            ]);
+            app(FiadosService::class)->guardarFiado($venta->id_cliente, $venta->id, $venta->total_fiado);
 
-            $productoVendido->saveOrFail();
+            $idVenta = $venta->id;
+            $productos = $request->input('productos');
 
-            $productoActualizado = Producto::where('codigo_barras', $producto["codigo_barras"])->first();
-            $productoActualizado->existencia -= $productoVendido->cantidad;
+            $lista_productos = [];
+            foreach ($productos as $producto) {
+                $productoVendido = new ProductoVendido();
+                $productoVendido->fill([
+                    "id_venta" => $idVenta,
+                    "descripcion" => $producto["descripcion"],
+                    "codigo_barras" => $producto["codigo_barras"],
+                    "precio" => $producto["precio"],
+                    "cantidad" => $producto["cantidad"],
+                    "unidad" => $producto["unidad"] == "Kilos" ? "Kg" : ($producto["unidad"] == "Libras" ? "Lb" : "Und")
+                ]);
+
+                $productoVendido->saveOrFail();
+
+                $productoActualizado = Producto::where('codigo_barras', $producto["codigo_barras"])->first();
+                $productoActualizado->existencia -= $productoVendido->cantidad;
             
             
-            DB::connection('mysql')->table('productos')
-            ->where('codigo_barras', $producto["codigo_barras"])
-            ->update([
-                'existencia' => $productoActualizado->existencia
-            ]);
+                DB::connection('mysql')->table('productos')
+                ->where('codigo_barras', $producto["codigo_barras"])
+                ->update([
+                    'existencia' => $productoActualizado->existencia
+                ]);
             
 
-            $lista_productos[] = [
-                "codigo_barras" => $producto["codigo_barras"],
-                "existencia" => $productoActualizado->existencia
-            ];
-        }
-        
+                $lista_productos[] = [
+                    "codigo_barras" => $producto["codigo_barras"],
+                    "existencia" => $productoActualizado->existencia
+                ];
+            }
+
+            return [$idVenta, $lista_productos];
+        });
+
+        // El ticket se imprime después de guardar
         $myVariable = $this->ticket($idVenta, $imprimir_factura, $direccion_cliente);
 
         $id_pedido =  $request->input('id_pedido');
@@ -113,17 +119,6 @@ class DomiciliosController extends Controller
         ]);
     }
 
-    public function guardarFiado($id_cliente, $id_factura, $total_fiado){
-        $datos = [
-            'id_cliente' => $id_cliente,
-            'id_factura' => $id_factura,
-            'total_fiado' => $total_fiado
-        ];
-
-        DB::connection('mysql')->table('fiados')->insert(
-            $datos 
-        );
-    }
     
     public function actualizarCantidadesProductos($lista_productos, $id_pedido){
         if (checkdnsrr('example.com', 'A')) {

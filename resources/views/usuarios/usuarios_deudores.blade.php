@@ -151,10 +151,15 @@
         $.post(@json(route('usuarios.abonar')), $($c("formAbonar")).serialize())
             .then(r => {
                 $("#modalAbonar").modal("hide");
-                Swal.fire({ icon: "success", title: "Abono registrado", text: pesos(v) + " de " + $c("abonoNombre").textContent + ".", showConfirmButton: false, timer: 1800 });
-                setTimeout(() => location.reload(), 1800);
-            }, () => {
-                Swal.fire({ icon: "error", title: "No se pudo registrar el abono", text: "Revisa la conexión e inténtalo de nuevo." });
+                const texto = pesos(v) + " de " + $c("abonoNombre").textContent + "." +
+                    (r.saldada ? " Quedó a paz y salvo." : " Sigue debiendo " + pesos(r.deuda_restante) + ".");
+                Swal.fire({ icon: "success", title: "Abono registrado", text: texto, showConfirmButton: false, timer: 2200 });
+                setTimeout(() => location.reload(), 2200);
+            }, (x) => {
+                // 422 = el servidor rechazó el valor (mayor que la deuda, cero, etc.)
+                const r = x.responseJSON || {};
+                const motivo = r.mensaje || (r.errors && Object.values(r.errors)[0][0]);
+                Swal.fire({ icon: "error", title: "No se pudo registrar el abono", text: motivo || "Revisa la conexión e inténtalo de nuevo." });
                 $c("abonoGuardar").disabled = false;
             });
     });

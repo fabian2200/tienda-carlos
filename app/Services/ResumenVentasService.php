@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\DB;
  * Cifras de ventas y fiados calculadas en SQL (sin traer todas las ventas a PHP).
  * Mismos criterios que VentasController@index:
  *  - ventas: solo las del usuario (caja) indicado y con cliente existente;
- *  - fiado pendiente: de todos los clientes, fiados con venta y cliente existentes
- *    menos los abonos de esos mismos clientes.
+ *  - fiado pendiente: lo calcula FiadosService (mismas reglas en todas las pantallas).
  */
 class ResumenVentasService
 {
@@ -48,41 +47,28 @@ class ResumenVentasService
             ->get();
     }
 
-    // Fiados con cliente y venta existentes (mismo criterio que las pantallas anteriores)
-    private function fiados($consulta)
-    {
-        return $consulta->from("fiados")
-            ->join("clientes", "clientes.id", "=", "fiados.id_cliente")
-            ->join("ventas", "ventas.id", "=", "fiados.id_factura");
-    }
-
     /**
-     * Suma de lo fiado (sin descontar abonos). Con $idUsuario, solo lo fiado en esa caja.
+     * Suma de lo fiado pendiente (sin descontar abonos). Con $idUsuario, solo lo fiado en esa caja.
+     * Mismas reglas que FiadosService (fiados pendientes con venta y cliente existentes).
      */
     public function totalFiado($idUsuario = null)
     {
-        $consulta = $this->fiados(DB::query());
+        $consulta = app(FiadosService::class)->fiadosPendientes();
         if ($idUsuario !== null) {
             $consulta->where("ventas.id_usuario", $idUsuario);
         }
         return (float) $consulta->sum("fiados.total_fiado");
     }
 
-    /**
-     * Abonos de los clientes que tienen fiados.
-     */
+    /** Abonos pendientes de los clientes que tienen fiados pendientes. */
     public function totalAbonado()
     {
-        return (float) DB::table("abonos_fiados")
-            ->whereIn("id_cliente", function ($consulta) {
-                $this->fiados($consulta)->select("fiados.id_cliente");
-            })
-            ->sum("valor_abonado");
+        return app(FiadosService::class)->totales()->abonado;
     }
 
     public function fiadoPendiente()
     {
-        return $this->totalFiado() - $this->totalAbonado();
+        return app(FiadosService::class)->totales()->por_cobrar;
     }
 
     public function productosEnAlerta()

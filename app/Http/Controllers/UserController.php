@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Hash;
 use App\Cliente;
 use DB;
 use App\Venta;
+use App\Services\FiadosService;
 use App\Services\TicketService;
+use InvalidArgumentException;
 use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 use Mike42\Escpos\Printer;
 
@@ -29,108 +31,35 @@ class UserController extends Controller
         return view("usuarios.usuarios_index", ["usuarios" => $usuarios]);
     }
 
-    public function deudores()
+    public function deudores(FiadosService $fiados)
     {
-        $resultado = Cliente::join("fiados", "clientes.id", "=", "fiados.id_cliente")
-        ->join("ventas", "ventas.id", "fiados.id_factura")
-        ->selectRaw("clientes.*, SUM(fiados.total_fiado) as total_fiado")
-        ->groupBy('clientes.id')
-        ->get();
-
-        $clientes_deben = [];
-        $total_fiado = 0;
-        $total_abonado_clientes = 0;
-        $total_por_cobrar = 0;
-
-        foreach ($resultado as $item) {
-            $abonado = Cliente::join("abonos_fiados", "clientes.id", "=", "abonos_fiados.id_cliente")
-            ->selectRaw("clientes.id, SUM(abonos_fiados.valor_abonado) as total_abonado")
-            ->where("clientes.id", $item->id)
-            ->groupBy('clientes.id')
-            ->get();
-
-            if(count($abonado) == 0){
-                $total_abonado = 0;
-            }else{
-                $total_abonado = $abonado[0]->total_abonado;
-                $total_abonado_clientes += $total_abonado;
-            }
-
-            $item->total_abonado = $total_abonado;
-            $item->total_deuda = $item->total_fiado - $item->total_abonado;
-
-            $total_fiado += $item->total_fiado;
-
-            if($item->total_deuda > 0){
-                array_push($clientes_deben, $item);
-            }
-        }
-
-        $total_por_cobrar = $total_fiado - $total_abonado_clientes;
-
-        // Los que más deben, primero
-        usort($clientes_deben, function ($a, $b) { return $b->total_deuda <=> $a->total_deuda; });
-
-        return view("usuarios.usuarios_deudores", ["clientes_deudores" => $clientes_deben, "total_fiado" => $total_fiado, "total_abonado_clientes" => $total_abonado_clientes, "total_por_cobrar" => $total_por_cobrar]);
+        $totales = $fiados->totales();
+        return view("usuarios.usuarios_deudores", [
+            "clientes_deudores" => $fiados->deudores(),
+            "total_fiado" => $totales->fiado,
+            "total_abonado_clientes" => $totales->abonado,
+            "total_por_cobrar" => $totales->por_cobrar,
+        ]);
     }
 
-    public function abonar(Request $request)
+    public function abonar(Request $request, FiadosService $fiados)
     {
-        $id_cliente = $request->input('id_cliente');
-        $total_abonar = $request->input('total_abonar');
+        $request->validate([
+            "id_cliente" => "required|integer",
+            "total_abonar" => "required|numeric|gt:0",
+        ], [], ["total_abonar" => "valor del abono"]);
 
-
-        $datos = [
-            'id_cliente' => $id_cliente,
-            'valor_abonado' => $total_abonar,
-            'fecha_abono' => date("d-m-Y H:i:s")
-        ];
-
-        DB::connection('mysql')->table('abonos_fiados')->insert(
-            $datos 
-        );
-
-        
-        
-        $fiado = Cliente::join("fiados", "clientes.id", "=", "fiados.id_cliente")
-        ->join("ventas", "ventas.id", "fiados.id_factura")
-        ->selectRaw("clientes.*, SUM(fiados.total_fiado) as total_fiado")
-        ->groupBy('clientes.id')
-        ->where("clientes.id", $id_cliente)
-        ->first();
-
-        $abonado = Cliente::join("abonos_fiados", "clientes.id", "=", "abonos_fiados.id_cliente")
-        ->selectRaw("clientes.id, SUM(abonos_fiados.valor_abonado) as total_abonado")
-        ->where("clientes.id", $id_cliente)
-        ->groupBy('clientes.id')
-        ->get();
-
-        if(count($abonado) == 0){
-            $total_abonado = 0;
-        }else{
-            $total_abonado = $abonado[0]->total_abonado;
+        try {
+            $resultado = $fiados->registrarAbono($request->input("id_cliente"), $request->input("total_abonar"));
+        } catch (InvalidArgumentException $e) {
+            return response()->json(["mensaje" => $e->getMessage()], 422);
         }
 
-
-        $total_deuda = $fiado->total_fiado - $total_abonado;
-        
-        if($total_deuda < 1){
-            DB::connection('mysql')->table('ventas')
-            ->where("id_cliente", $id_cliente)
-            ->update([
-                'total_fiado' => 0,
-            ]);
-
-            DB::connection('mysql')->table('fiados')
-            ->where("id_cliente", $id_cliente)
-            ->delete();
-
-            DB::connection('mysql')->table('abonos_fiados')
-            ->where("id_cliente", $id_cliente)
-            ->delete();
-        }
-        
-        return response()->json(["mensaje" => "Abono realizado correctamente"]);
+        return response()->json([
+            "mensaje" => $resultado->saldada ? "Abono registrado. El cliente quedó a paz y salvo." : "Abono realizado correctamente",
+            "deuda_restante" => $resultado->deuda_restante,
+            "saldada" => $resultado->saldada,
+        ]);
     }
 
     /**
@@ -230,83 +159,33 @@ class UserController extends Controller
         return redirect()->route("usuarios.index")->with("mensaje", "Usuario eliminado")->with("tipo", "success");
     }
 
-    public function infoDeuda(Request $request){
-        $id = $request->input("id_cliente");
+    /** Cliente con su fiado, abonado, deuda y las ventas con fiado pendiente. */
+    private function datosDeuda(FiadosService $fiados, $idCliente)
+    {
+        $cliente = Cliente::findOrFail($idCliente);
+        $estado = $fiados->estadoCliente($idCliente);
+        $cliente->total_fiado = $estado->fiado;
+        $cliente->total_abonado = $estado->abonado;
+        $cliente->total_deuda = $estado->deuda;
 
-        $resultado = Cliente::join("fiados", "clientes.id", "=", "fiados.id_cliente")
-        ->join("ventas", "ventas.id", "fiados.id_factura")
-        ->selectRaw("clientes.*, SUM(fiados.total_fiado) as total_fiado")
-        ->groupBy('clientes.id')
-        ->where("clientes.id", $id)
-        ->first();
-
-       
-        $abonado = Cliente::join("abonos_fiados", "clientes.id", "=", "abonos_fiados.id_cliente")
-        ->selectRaw("clientes.id, SUM(abonos_fiados.valor_abonado) as total_abonado")
-        ->where("clientes.id", $id)
-        ->groupBy('clientes.id')
-        ->get();
-
-        if(count($abonado) == 0){
-            $total_abonado = 0;
-        }else{
-            $total_abonado = $abonado[0]->total_abonado;
-        }
-
-        $resultado->total_abonado = $total_abonado;
-        $resultado->total_deuda = $resultado->total_fiado - $resultado->total_abonado;
-
-
-        $facturas_deudas =  DB::connection('mysql')->table('ventas')
-        ->where("id_cliente", $id)
-        ->where("total_fiado", ">", 0)
-        ->get();
-
-        foreach ($facturas_deudas as $item) {
+        $facturas = $fiados->facturasPendientes($idCliente);
+        foreach ($facturas as $item) {
             $item->productos = DB::connection('mysql')->table('productos_vendidos')
             ->where("id_venta", $item->id)
             ->get();
         }
+        return [$cliente, $facturas];
+    }
 
+    public function infoDeuda(Request $request, FiadosService $fiados){
+        [$resultado, $facturas_deudas] = $this->datosDeuda($fiados, $request->input("id_cliente"));
         return view("usuarios.info_deuda", ["cliente" => $resultado, "facturas_deudas" => $facturas_deudas]);
     }
 
-    public function ImprimirDeuda(Request $request){
-
-        $id_cliente = $request->input("id_cliente");
-
-        $resultado = Cliente::join("fiados", "clientes.id", "=", "fiados.id_cliente")
-        ->selectRaw("clientes.*, SUM(fiados.total_fiado) as total_fiado")
-        ->groupBy('clientes.id')
-        ->where("clientes.id", $id_cliente)
-        ->first();
-
-       
-        $abonado = Cliente::join("abonos_fiados", "clientes.id", "=", "abonos_fiados.id_cliente")
-        ->selectRaw("clientes.id, SUM(abonos_fiados.valor_abonado) as total_abonado")
-        ->where("clientes.id", $id_cliente)
-        ->groupBy('clientes.id')
-        ->get();
-
-        $total_deuda = 0;
-        if(count($abonado) == 0){
-            $total_abonado = 0;
-        }else{
-            $total_abonado = $abonado[0]->total_abonado;
-        }
-
-        $total_deuda = $resultado->total_fiado - $total_abonado;
-
-        $facturas_deudas =  DB::connection('mysql')->table('ventas')
-        ->where("id_cliente", $id_cliente)
-        ->where("total_fiado", ">", 0)
-        ->get();
-
-        foreach ($facturas_deudas as $item) {
-            $item->productos = DB::connection('mysql')->table('productos_vendidos')
-            ->where("id_venta", $item->id)
-            ->get();
-        }
+    public function ImprimirDeuda(Request $request, FiadosService $fiados){
+        [$resultado, $facturas_deudas] = $this->datosDeuda($fiados, $request->input("id_cliente"));
+        $total_abonado = $resultado->total_abonado;
+        $total_deuda = $resultado->total_deuda;
 
         $impresora = TicketService::impresora();
         TicketService::encabezado($impresora, "Ticket de Deuda", date("d/m/Y"));
