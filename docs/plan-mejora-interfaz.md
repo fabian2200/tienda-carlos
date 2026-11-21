@@ -4,7 +4,7 @@
 
 | Fase | Estado |
 |---|---|
-| 1–2 Tabla `negocio` y tickets | Hecha. El SQL está al final de `database/tablas.sql` (bloque del rediseño) y ya se aplicó en la base local |
+| 1–2 Tabla `negocio` y tickets | Hecha. El SQL está al final de `database/estructura.sql` (bloque del rediseño) y ya se aplicó en la base local |
 | 3 Sistema visual (`public/css/pos.css`, fuentes y librerías locales) | Hecha |
 | 4 Menú lateral y barra superior | Hecha |
 | 5 Login | Hecha |
@@ -69,7 +69,7 @@ Todos repiten "Provisiones Carlos Andres / NIT 12435619 / CRA 15 #13B Bis - 62 /
    | `firma_software` | varchar(120) null | VentSOFT |
    | `timestamps` | | |
 
-   Como la BD real se maneja con dumps (`database/tablas.sql`, `Dump20260424.sql`), además de la migración dejar `database/negocio.sql` con `CREATE TABLE` + `INSERT` de los datos actuales, para aplicarlo a mano en el PC de la tienda.
+   Como la BD real se maneja con dumps (`database/estructura.sql` y `database/datos.sql`), además de la migración dejar `database/negocio.sql` con `CREATE TABLE` + `INSERT` de los datos actuales, para aplicarlo a mano en el PC de la tienda.
 
 2. **Modelo** `app/Negocio.php` (los modelos están en `app/`, no en `app/Models`), `protected $table = 'negocio'`, con `Negocio::actual()` que devuelve la fila 1 cacheada (`Cache::rememberForever('negocio', ...)`) y limpia la caché al guardar.
 
@@ -217,7 +217,7 @@ Aplicar el mismo sistema (encabezado de página, tabla `.tabla-pos`, acciones co
 - Venta completa: lector → balanza → cobrar → ticket impreso con datos del negocio desde la BD.
 - Cambiar el NIT en Configuración → la siguiente impresión y el PDF lo muestran sin tocar código.
 - Reimpresión, ticket de domicilio y ticket de deuda.
-- Respaldo de la BD (`mysqldump`) antes de aplicar el bloque del rediseño de `tablas.sql` en el PC de la tienda.
+- Respaldo de la BD (`mysqldump`) antes de aplicar el bloque del rediseño de `estructura.sql` en el PC de la tienda.
 
 ## Orden y tamaño estimado
 

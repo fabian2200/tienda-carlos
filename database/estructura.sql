@@ -1,3 +1,10 @@
+-- =====================================================================================
+-- ESTRUCTURA de la base de la tienda (sin datos de negocio). Base: punto_venta_2.
+--
+-- Base nueva desde cero: ejecutar este archivo COMPLETO en una base vacía y luego database/datos.sql.
+-- Base que ya tiene datos (PC de la tienda): ejecutar SOLO el bloque "REDISEÑO" del final.
+--   Lo de arriba empieza cada tabla con DROP TABLE y borraría todo.
+-- =====================================================================================
 
 DROP TABLE IF EXISTS `abonos_fiados`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -105,6 +112,8 @@ CREATE TABLE `ventas` (
   `total_fiado` double DEFAULT NULL,
   `total_vueltos` double DEFAULT NULL,
   `fecha_venta` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `precio_domi` double DEFAULT '0',
+  `id_usuario` int DEFAULT '1',
   PRIMARY KEY (`id`),
   KEY `ventas_id_cliente_foreign` (`id_cliente`)
 ) ENGINE=InnoDB AUTO_INCREMENT=65600 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -228,3 +237,36 @@ CREATE TABLE IF NOT EXISTS `compras_detalle` (
   KEY `compras_detalle_id_compra_index` (`id_compra`),
   KEY `compras_detalle_id_producto_index` (`id_producto`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---- 4. Fiados pagados y fecha de los abonos -------------------------------------------
+-- Cuando un cliente termina de pagar, sus fiados y abonos ya no se borran: se marcan con
+-- la fecha en que quedó a paz y salvo (columna pagado_en). Así se conserva el historial.
+-- La fecha de cada abono pasa de texto ("21-11-2026 10:00:00") a fecha real (DATETIME).
+-- Seguro de ejecutar más de una vez.
+
+-- fiados.pagado_en
+SET @existe := (SELECT COUNT(*) FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'fiados' AND COLUMN_NAME = 'pagado_en');
+SET @sql := IF(@existe = 0,
+    'ALTER TABLE `fiados` ADD COLUMN `pagado_en` datetime NULL DEFAULT NULL, ADD KEY `fiados_id_cliente_index` (`id_cliente`), ADD KEY `fiados_id_factura_index` (`id_factura`)',
+    'SELECT 1');
+PREPARE consulta FROM @sql; EXECUTE consulta; DEALLOCATE PREPARE consulta;
+
+-- abonos_fiados.pagado_en
+SET @existe := (SELECT COUNT(*) FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'abonos_fiados' AND COLUMN_NAME = 'pagado_en');
+SET @sql := IF(@existe = 0,
+    'ALTER TABLE `abonos_fiados` ADD COLUMN `pagado_en` datetime NULL DEFAULT NULL, ADD KEY `abonos_fiados_id_cliente_index` (`id_cliente`)',
+    'SELECT 1');
+PREPARE consulta FROM @sql; EXECUTE consulta; DEALLOCATE PREPARE consulta;
+
+-- abonos_fiados.fecha_abono: de texto "dd-mm-aaaa hh:mm:ss" a DATETIME
+UPDATE `abonos_fiados`
+   SET `fecha_abono` = DATE_FORMAT(STR_TO_DATE(`fecha_abono`, '%d-%m-%Y %H:%i:%s'), '%Y-%m-%d %H:%i:%s')
+ WHERE `fecha_abono` REGEXP '^[0-9]{2}-[0-9]{2}-[0-9]{4}';
+SET @tipo := (SELECT DATA_TYPE FROM information_schema.COLUMNS
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'abonos_fiados' AND COLUMN_NAME = 'fecha_abono');
+SET @sql := IF(@tipo <> 'datetime',
+    'ALTER TABLE `abonos_fiados` MODIFY `fecha_abono` datetime NULL DEFAULT NULL',
+    'SELECT 1');
+PREPARE consulta FROM @sql; EXECUTE consulta; DEALLOCATE PREPARE consulta;

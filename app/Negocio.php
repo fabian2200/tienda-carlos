@@ -16,7 +16,7 @@ class Negocio extends Model
 
     const CLAVE_CACHE = "negocio";
 
-    // Se usan si la tabla todavía no existe (antes de aplicar el bloque del rediseño de database/tablas.sql).
+    // Se usan si la tabla todavía no existe (antes de aplicar el bloque del rediseño de database/estructura.sql).
     const VALORES_POR_DEFECTO = [
         "nombre" => "Provisiones Carlos Andres",
         "nit" => "12435619",

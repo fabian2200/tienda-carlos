@@ -41,17 +41,18 @@ El `--no-scripts` evita que Composer intente correr `artisan` con PHP 8.2 y fall
 
 ## 4. Crear las tablas nuevas
 
-El SQL está al final de `database/tablas.sql`, en el bloque que empieza con **`-- REDISEÑO (noviembre de 2026)`**.
+El SQL está al final de `database/estructura.sql`, en el bloque que empieza con **`-- REDISEÑO (noviembre de 2026)`**.
 
-> **No ejecutes `tablas.sql` completo en la base de la tienda.** La parte de arriba de ese archivo empieza cada tabla con `DROP TABLE` y borraría todas las ventas, productos y clientes. Ejecuta **solo el bloque del rediseño**: desde la línea `-- ====...` que está justo encima de `-- REDISEÑO` hasta el final del archivo.
+> **No ejecutes `estructura.sql` completo en la base de la tienda.** La parte de arriba de ese archivo empieza cada tabla con `DROP TABLE` y borraría todas las ventas, productos y clientes. Ejecuta **solo el bloque del rediseño**: desde la línea `-- ====...` que está justo encima de `-- REDISEÑO` hasta el final del archivo.
 
-En MySQL Workbench: abre `tablas.sql`, selecciona desde esa línea hasta el final, cópialo en una pestaña nueva de consulta sobre la base del sistema y ejecútalo. El bloque no borra nada y se puede ejecutar más de una vez. Hace tres cosas:
+En MySQL Workbench: abre `estructura.sql`, selecciona desde esa línea hasta el final, cópialo en una pestaña nueva de consulta sobre la base del sistema y ejecútalo. El bloque no borra nada y se puede ejecutar más de una vez. Hace cuatro cosas:
 
 1. Crea la tabla `negocio` con los datos actuales (Provisiones Carlos Andres, NIT 12435619…) y deja la firma del software como "VentSOFT".
 2. Crea la tabla `proveedores` y agrega la columna opcional `id_proveedor` a `productos` y `compras`. Las compras antiguas conservan el nombre del proveedor escrito a mano.
 3. Crea la tabla `compras_detalle` con los productos de cada compra.
+4. Agrega la columna `pagado_en` a `fiados` y `abonos_fiados` (cuando un cliente termina de pagar, su historial se marca como pagado en vez de borrarse) y convierte la fecha de los abonos de texto a fecha real.
 
-(Para armar una base nueva desde cero sí se ejecuta `tablas.sql` completo: el bloque del rediseño ya va incluido al final.)
+(Para armar una base nueva desde cero sí se ejecuta `estructura.sql` completo, porque el bloque del rediseño ya va incluido al final. Después se ejecuta `database/datos.sql` con los datos.)
 
 ## 5. Limpiar cachés
 

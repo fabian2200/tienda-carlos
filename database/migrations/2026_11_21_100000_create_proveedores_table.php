@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Equivale a la sección 2 del bloque del rediseño al final de database/tablas.sql (la base de la tienda se maneja con dumps).
+ * Equivale a la sección 2 del bloque del rediseño al final de database/estructura.sql (la base de la tienda se maneja con dumps).
  */
 class CreateProveedoresTable extends Migration
 {

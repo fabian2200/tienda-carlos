@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Equivale a la sección 1 del bloque del rediseño al final de database/tablas.sql (la base de la tienda se maneja con dumps).
+ * Equivale a la sección 1 del bloque del rediseño al final de database/estructura.sql (la base de la tienda se maneja con dumps).
  */
 class CreateNegocioTable extends Migration
 {
