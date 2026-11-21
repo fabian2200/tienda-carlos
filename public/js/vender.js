@@ -73,6 +73,7 @@
             productos = r.productosCarrito || [];
             total = Number(r.total) || 0;
             pintarCarrito();
+            sincronizarFiar();
             actualizarCobro();
         });
     }
@@ -307,11 +308,22 @@
     modal.on("hidden.bs.modal", () => { elegido = null; codigo.focus(); });
 
     // ---------- cobro ----------
+    // Lo recibido: null si el campo está vacío (pago exacto); 0 es un valor válido (todo fiado)
+    function leerRecibido() {
+        return /\d/.test(recibido.value) ? soloDigitos(recibido.value) : null;
+    }
+
+    // Si lo recibido no alcanza, se marca "Fiar lo que falta"; si alcanza, se desmarca
+    function sincronizarFiar() {
+        const r = leerRecibido();
+        fiar.checked = r !== null && r < total;
+    }
+
     function actualizarCobro() {
-        const r = soloDigitos(recibido.value);
+        const r = leerRecibido();
         const caja = $id("cambio"), etiqueta = $id("etiquetaCambio");
         caja.classList.remove("falta", "fiado");
-        if (!r) { etiqueta.textContent = "Cambio"; caja.textContent = pesos(0); return; }
+        if (r === null) { etiqueta.textContent = "Cambio"; caja.textContent = pesos(0); return; }
         const diferencia = r - total;
         if (diferencia >= 0) { etiqueta.textContent = "Cambio"; caja.textContent = pesos(diferencia); }
         else if (fiar.checked) { etiqueta.textContent = "Queda fiado"; caja.textContent = pesos(-diferencia); caja.classList.add("fiado"); }
@@ -319,8 +331,9 @@
     }
 
     recibido.addEventListener("input", () => {
-        const v = soloDigitos(recibido.value);
-        recibido.value = v ? v.toLocaleString("es-CO") : "";
+        const v = leerRecibido();
+        recibido.value = v === null ? "" : v.toLocaleString("es-CO");
+        sincronizarFiar();
         actualizarCobro();
     });
     recibido.addEventListener("keydown", (e) => {
@@ -331,6 +344,7 @@
     document.querySelectorAll(".js-billete").forEach((b) => b.addEventListener("click", () => {
         const v = Number(b.dataset.valor) || total;
         recibido.value = v ? v.toLocaleString("es-CO") : "";
+        sincronizarFiar();
         actualizarCobro();
         $id("botonCobrar").focus();
     }));
@@ -354,7 +368,8 @@
         if (!productos.length) { aviso("Agrega al menos un producto antes de cobrar.", "error"); return codigo.focus(); }
 
         // Sin valor recibido se toma como pago exacto
-        const dinero = soloDigitos(recibido.value) || total;
+        const r = leerRecibido();
+        const dinero = r === null ? total : r;
         const falta = total - dinero;
         if (falta > 0 && !fiar.checked) {
             aviso("Falta " + pesos(falta) + ". Activa “Fiar lo que falta” o corrige lo recibido.", "error");
