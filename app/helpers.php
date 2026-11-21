@@ -30,3 +30,25 @@ if (!function_exists("cantidad")) {
         return rtrim(rtrim(number_format($valor, $decimales, ",", "."), "0"), ",");
     }
 }
+
+if (!function_exists("dinero_corto")) {
+    /**
+     * Pesos abreviados para gráficas y cifras grandes:
+     * 850 → "$ 850", 45000 → "$ 45 mil", 1250000 → "$ 1,3 M", 12000000 → "$ 12 M".
+     */
+    function dinero_corto($valor)
+    {
+        $valor = (float) ($valor ?? 0);
+        $signo = $valor < 0 ? "-" : "";
+        $v = abs($valor);
+        if ($v >= 999500) {
+            $m = $v / 1000000;
+            $texto = number_format($m, $m < 10 && round($m, 1) != round($m) ? 1 : 0, ",", ".") . " M";
+        } elseif ($v >= 1000) {
+            $texto = number_format($v / 1000, 0, ",", ".") . " mil";
+        } else {
+            $texto = number_format($v, 0, ",", ".");
+        }
+        return $signo . "$ " . $texto;
+    }
+}

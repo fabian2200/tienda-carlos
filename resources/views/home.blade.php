@@ -12,6 +12,7 @@
         ["ruta" => route("usuarios.index"), "icono" => "fa-id-badge", "titulo" => "Usuarios", "texto" => "Cajas y contraseñas"],
     ];
     if ($esAdmin) {
+        array_unshift($accesos, ["ruta" => route("tablero.index"), "icono" => "fa-chart-bar", "titulo" => "Tablero", "texto" => "Métricas del negocio"]);
         $accesos[] = ["ruta" => route("cajas.index"), "icono" => "fa-cash-register", "titulo" => "Cajas", "texto" => "Ventas de cada caja"];
     }
 @endphp

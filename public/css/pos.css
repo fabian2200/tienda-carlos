@@ -959,3 +959,132 @@ img.factura-logo { background: #fff; }
 .tabla-compra .prod { min-width: 170px; }
 .unidad-fija { padding: 1px 8px; font-size: 11.5px; }
 .unidad-fija i { font-size: 9px; margin-right: 2px; }
+
+/* ===================== 17. Tablero (métricas del negocio) ===================== */
+.tablero { max-width: 1280px; margin: 0 auto; padding-top: 26px; padding-bottom: 32px; }
+.tablero-encabezado { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+
+/* Selector de período: una sola fila de botones */
+.tablero-periodos { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; background: var(--papel); border: 1px solid var(--niebla); border-radius: 10px; }
+.tablero-periodos a { padding: 7px 14px; border-radius: 7px; color: var(--tinta-2); font-weight: 600; font-size: 14.5px; white-space: nowrap; }
+.tablero-periodos a:hover { color: var(--tinta); background: var(--lienzo); text-decoration: none; }
+.tablero-periodos a.activo { background: var(--hoja); color: #fff; }
+
+/* Cifras: una franja con divisiones, la primera es la principal */
+.tablero-cifras { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; background: var(--papel); border: 1px solid var(--niebla); border-radius: var(--r-panel); overflow: hidden; }
+.tablero-cifra { display: flex; flex-direction: column; gap: 4px; padding: 20px 22px; min-width: 0; }
+.tablero-cifra + .tablero-cifra { border-left: 1px solid var(--niebla); }
+.tablero-cifra .etiqueta { color: var(--tinta-2); font-size: 14px; }
+.tablero-cifra .valor { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1.15; letter-spacing: -.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tablero-cifra .detalle { color: var(--tinta-2); font-size: 13.5px; }
+.tablero-cifra.principal .valor { font-size: 48px; letter-spacing: -.025em; }
+
+.cambio { display: inline-flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 700; flex-wrap: wrap; }
+.cambio i { font-size: 11px; }
+.cambio .cambio-vs { font-weight: 400; color: var(--tinta-2); }
+.cambio.bueno { color: var(--hoja-clara); }
+.cambio.malo { color: var(--alerta); }
+.cambio.neutro { color: var(--tinta-2); font-weight: 400; }
+
+/* Rejilla de paneles */
+.tablero-rejilla { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.tablero-panel { display: flex; flex-direction: column; min-width: 0; }
+.tablero-panel.ancho-2 { grid-column: span 2; }
+.tablero-panel-cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.tablero-panel-cabeza h2 { font-size: 17px; margin: 0; }
+.tablero-panel-cabeza a { font-weight: 700; font-size: 14px; }
+.tablero-nota { color: var(--tinta-2); font-size: 13.5px; margin: -6px 0 10px; }
+.tablero-panel-cabeza .tablero-nota { margin: 0; }
+.tablero-nota strong { color: var(--tinta); }
+.tablero-subtitulo { font-size: 14px; color: var(--tinta-2); font-weight: 600; margin: 18px 0 6px; }
+.tablero-vacio { color: var(--tinta-2); margin: 10px 0; }
+.tablero-pie { color: var(--tinta-2); font-size: 12.5px; margin: 12px 0 0; }
+.tablero > .tablero-pie { margin-top: 18px; }
+
+.tablero-dato { display: flex; flex-direction: column; gap: 2px; }
+.tablero-dato + .tablero-dato { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--niebla); }
+.tablero-dato .etiqueta { color: var(--tinta-2); font-size: 13.5px; }
+.tablero-dato .valor { font-family: var(--display); font-size: 28px; font-weight: 700; line-height: 1.2; }
+.tablero-dato .valor.secundario { font-size: 22px; color: var(--tinta-2); }
+.tablero-dato .detalle { color: var(--tinta-2); font-size: 13.5px; }
+
+.tablero-lista { list-style: none; margin: 0; padding: 0; }
+.tablero-lista li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14.5px; }
+.tablero-lista li + li { border-top: 1px solid var(--niebla); }
+.tablero-lista a { color: var(--tinta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tablero-lista .num, .barra-valor, .agotar-dato { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Gráfica de columnas (SVG). Una serie: verde del sistema; la resaltada en mazorca. */
+.grafica { width: 100%; overflow-x: auto; }
+.grafica svg { display: block; width: 100%; height: auto; overflow: visible; }
+.grafica .guia { stroke: var(--niebla); stroke-width: 1; shape-rendering: crispEdges; }
+.grafica .guia.base { stroke: #BFC8C2; }
+.grafica .eje { fill: var(--tinta-2); font-size: 12px; font-family: var(--texto); font-variant-numeric: tabular-nums; }
+.grafica .columna { outline: none; cursor: default; }
+.grafica .zona { fill: transparent; }
+.grafica .barra { fill: var(--hoja-clara); transition: fill .12s; }
+.grafica .columna.resaltada .barra { fill: var(--mazorca); }
+.grafica .columna:hover .zona, .grafica .columna:focus .zona { fill: rgba(30, 91, 69, .06); }
+.grafica .columna:hover .barra, .grafica .columna:focus .barra { fill: var(--hoja); }
+.grafica .columna.resaltada:hover .barra, .grafica .columna.resaltada:focus .barra { fill: var(--mazorca-oscura); }
+.grafica .valor-tope { fill: var(--tinta); font-size: 12.5px; font-weight: 700; font-family: var(--texto); }
+
+/* Barras horizontales (productos, categorías) */
+.barra-fila { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 6px; outline: none; }
+.barra-fila:hover, .barra-fila:focus { background: var(--lienzo); }
+.barra-nombre { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-pista { height: 12px; display: block; }
+.barra-relleno { display: block; height: 100%; background: var(--hoja-clara); border-radius: 0 4px 4px 0; }
+.barra-fila:hover .barra-relleno, .barra-fila:focus .barra-relleno { background: var(--hoja); }
+.barra-valor { font-size: 13.5px; font-weight: 700; min-width: 56px; text-align: right; }
+
+/* Productos por agotarse */
+.agotar-fila { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; font-size: 14.5px; }
+.agotar-fila + .agotar-fila { border-top: 1px solid var(--niebla); }
+.agotar-nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.estado { color: var(--tinta-2); font-size: 13.5px; }
+.estado.alerta { color: #9A5B00; font-weight: 700; }
+.estado.critico { color: var(--alerta); font-weight: 700; }
+
+/* Tabla opcional bajo la gráfica */
+.tablero-tabla { margin-top: 10px; }
+.tablero-tabla summary { color: var(--tinta-2); font-size: 13.5px; cursor: pointer; width: max-content; }
+.tablero-tabla table { margin: 8px 0 0; font-size: 14px; }
+.tablero-tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Recuadro al pasar el mouse */
+.tablero-tip {
+    position: fixed; z-index: 1080; pointer-events: none; max-width: 260px;
+    background: var(--tinta); color: #fff; border-radius: 8px; padding: 8px 11px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .25); font-size: 13.5px; line-height: 1.4;
+}
+.tablero-tip strong { display: block; font-size: 13.5px; }
+.tablero-tip span { display: block; color: #D7E1DB; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 1199.98px) {
+    .tablero-cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tablero-cifra:nth-child(3) { border-left: 0; }
+    .tablero-cifra:nth-child(n+3) { border-top: 1px solid var(--niebla); }
+    .tablero-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767.98px) {
+    .tablero { padding-top: 18px; }
+    .tablero-periodos { width: 100%; }
+    .tablero-periodos a { flex: 1 1 auto; text-align: center; padding: 7px 8px; }
+    .tablero-rejilla { grid-template-columns: 1fr; }
+    .tablero-panel.ancho-2 { grid-column: auto; }
+    .tablero-cifra.principal .valor { font-size: 40px; }
+}
+@media (max-width: 575.98px) {
+    .tablero-periodos { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .tablero-cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tablero-cifra { padding: 14px 16px; }
+    .tablero-cifra.principal, .tablero-cifra:nth-child(4) { grid-column: span 2; }
+    .tablero-cifra:nth-child(2) { border-left: 0; }
+    .tablero-cifra:nth-child(3) { border-left: 1px solid var(--niebla); }
+    .tablero-cifra:nth-child(4) { border-left: 0; }
+    .tablero-cifra:nth-child(n+2) { border-top: 1px solid var(--niebla); }
+    .tablero-cifra .valor { font-size: 24px; }
+    .tablero-cifra.principal .valor { font-size: 40px; }
+    .tablero-cifra:not(.principal) .cambio-vs { display: none; }
+}

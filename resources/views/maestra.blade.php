@@ -80,6 +80,11 @@
         <a class="{{ $ruta->routeIs('home') ? 'activo' : '' }}" href="{{ route('home') }}" data-nombre="Inicio">
             <i class="fas fa-home" aria-hidden="true"></i><span>Inicio</span>
         </a>
+        @if($esAdmin)
+            <a class="{{ $ruta->routeIs('tablero.*') ? 'activo' : '' }}" href="{{ route('tablero.index') }}" data-nombre="Tablero">
+                <i class="fas fa-chart-bar" aria-hidden="true"></i><span>Tablero</span>
+            </a>
+        @endif
 
         <div class="lateral-seccion {{ $secciones['operacion'] ? 'abierta' : '' }}">
             <button type="button" class="lateral-grupo" aria-expanded="{{ $secciones['operacion'] ? 'true' : 'false' }}" aria-controls="menuOperacion">

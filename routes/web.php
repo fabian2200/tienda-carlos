@@ -74,6 +74,7 @@ Route::middleware("auth")
         Route::post("/terminarVentaDomicilio", "DomiciliosController@terminarVentaDomicilio")->name("terminarVentaDomicilio");
 
         Route::get("/cajas", "CajasController@index")->name("cajas.index");
+        Route::get("/tablero", "TableroController@index")->name("tablero.index");
 
         Route::get("/negocio", "NegocioController@edit")->name("negocio.edit");
         Route::put("/negocio", "NegocioController@update")->name("negocio.update");
