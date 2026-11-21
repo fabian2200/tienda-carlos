@@ -14,9 +14,6 @@
                     <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-donate"></i>
                 </div>
             </div>
-            <div class="col-lg-3">
-
-            </div>
             <div style="padding: 20px;" class="col-lg-3">
                 <div class="card_ventas" style="background-color: rgb(4, 95, 1);">
                     <div style="width: 100%">
@@ -35,12 +32,14 @@
                     <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-hand-holding-usd"></i>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="col-12 mt-3">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">Cajas de Venta</h5>
+            <div style="padding: 20px;" class="col-lg-3">
+                <div class="card_ventas" style="background-color: rgb(247, 94, 6);">
+                    <div style="width: 100%">
+                        <h3><strong>Total Abonos</strong></h3>
+                    </div> 
+                    <h1>$ {{ number_format($totalAbonado, 2) }}</h1>
+                    <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-hand-holding-usd"></i>
+                </div>
             </div>
         </div>
     </div>
@@ -68,6 +67,22 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+    <div class="col-12 row">
+        <div class="col-lg-9">
+        </div>
+        <div style="padding: 20px;" class="col-lg-3">
+            <div class="card_ventas" style="background-color: rgb(247, 6, 6); position: relative;">
+                <div style="width: 100%">
+                    <h3><strong>Total por cobrar</strong></h3>
+                </div> 
+                <h1>$ {{ number_format($totalPorCobrar, 2, ",", ".") }}</h1>
+                <i style="opacity: .5; font-size: 50px; position: absolute; right: 30px; bottom: 30px" class="fas fa-hand-holding-usd"></i>
+            </div>
+            <br>
+            <br>
+            <br>
         </div>
     </div>
 </div>

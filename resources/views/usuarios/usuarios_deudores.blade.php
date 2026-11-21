@@ -5,14 +5,20 @@
 <div class="row">
     <div class="col-12">
         <div class="row">
-            <div class="col-lg-7">
+            <div class="col-lg-2">
                 <h1>Clientes Deudores  <i class="fas fa-hand-holding-usd"></i></h1>
             </div>
-            <div class="col-lg-5">
-                <h1 style="color: red; font-weight: bold">Deuda total:  ${{number_format($total_fiado, 2)}}</h1>
+            <div class="col-lg-3">
+                <h1 style="color: red; font-weight: bold">Total fiado:  ${{number_format($total_fiado, 2)}}</h1>
+            </div>
+            <div class="col-lg-3">
+                <h1 style="color: green; font-weight: bold">Total abonado:  ${{number_format($total_abonado_clientes, 2)}}</h1>
+            </div>
+            <div class="col-lg-3">
+                <h1 style="color: blue; font-weight: bold">Total por cobrar:  ${{number_format($total_por_cobrar, 2)}}</h1>
             </div>
         </div>
-               <hr>
+        <hr>
         @include("notificacion")
         <div class="table-responsive">
             <table id="tabla_deudores" class="table table-bordered">
@@ -61,7 +67,7 @@
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <form style="font-size: 16px !important" method="POST" action="{{route("usuarios.abonar")}}">
+        <form id="form_abonar" style="font-size: 16px !important" method="POST" action="{{route("usuarios.abonar")}}">
             @csrf
             <div class="modal-body">
                 <div class="form-group">
@@ -83,7 +89,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="submit" class="btn btn-success">Abonar</button>
+                <button type="button" onclick="abonar()" class="btn btn-success">Abonar</button>
                 <a style="color: white" class="btn btn-danger" data-dismiss="modal">Cerrar</a>
             </div>
         </form>
@@ -130,6 +136,67 @@
     function calcularDeudaRestante(element){
         var deuda_restante = valor_deuda - element.value;
         document.getElementById("total_deuda_restante").value = deuda_restante;
+    }
+
+    function abonar(){
+        var valor_maximo_abonar = parseFloat(document.getElementById("total_deuda").value);
+        var valor_abonar = parseFloat(document.getElementById("total_abonar").value);
+        if(valor_abonar > valor_maximo_abonar){
+            Swal.fire({
+                title: "Atención",
+                text: "El valor a abonar no puede ser mayor al valor de la deuda",
+                icon: "warning",
+                buttons: false,
+            });
+            return;
+        }
+
+        var formData = new FormData(document.getElementById("form_abonar"));
+        $.ajax({
+            url: "{{route('usuarios.abonar')}}",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            beforeSend: function(){
+                Swal.fire({
+                    title: "Abonando...",
+                    text: "Espere un momento...",
+                    icon: "info",
+                    showConfirmButton: false,
+                    buttons: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    allowEnterKey: false,
+                    allowTabKey: false,
+                    allowShiftTabKey: false,
+                    allowCtrlTabKey: false,
+                    allowCtrlShiftTabKey: false,
+                    allowCtrlShiftTabKey: false,
+                });
+            },
+            success: function(response){
+                Swal.fire({
+                    title: "Atención",
+                    text: response.mensaje,
+                    icon: "success",
+                    buttons: false,
+                    allowOutsideClick: false,
+                    timer: 3000,
+                });
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            },
+            error: function(xhr, status, error){
+                Swal.fire({
+                    title: "Error",
+                    text: xhr.responseText,
+                    icon: "error",
+                    buttons: false,
+                });
+            }
+        });
     }
 </script>
 @endsection

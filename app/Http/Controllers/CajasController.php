@@ -20,7 +20,8 @@ class CajasController extends Controller
         $totalVendidoMensual = 0;
         $totalVendidoHoy = 0;
         $totalFiado = 0;
-
+        $totalAbonado = 0;
+        $totalPorCobrar = 0;
 
         foreach ($cajas as $caja) {
             $ventasConTotales = Venta::join("clientes", "clientes.id", "ventas.id_cliente")
@@ -66,12 +67,10 @@ class CajasController extends Controller
 
                 $abonado = $abonado + $total_abonado;
                 $fiado = $fiado + $item->total_fiado;
-
             }
         
-            $caja->total_fiado = $fiado - $abonado;
+            $caja->total_fiado = $fiado;
 
-            
             $caja->total_ventas_hoy = Venta::join("clientes", "clientes.id", "ventas.id_cliente")
             ->where("ventas.fecha_venta", $hoy)
             ->where("ventas.id_usuario", $caja->id)
@@ -79,9 +78,38 @@ class CajasController extends Controller
 
             $totalVendidoMensual += $caja->total_ventas_mensual;
             $totalVendidoHoy += $caja->total_ventas_hoy;
-            $totalFiado += $caja->total_fiado;
         }
 
-        return view("cajas.cajas_index", compact("cajas", "totalVendidoMensual", "totalVendidoHoy", "totalFiado"));
+        $totalFiado = 0;
+        $totalAbonado = 0;
+
+        $resultado = Cliente::join("fiados", "clientes.id", "=", "fiados.id_cliente")
+        ->join("ventas", "ventas.id", "=", "fiados.id_factura")
+        ->selectRaw("clientes.*, SUM(fiados.total_fiado) as total_fiado")
+        ->groupBy('clientes.id')
+        ->get();
+
+
+        foreach ($resultado as $item) {
+            $abonado_cliente = Cliente::join("abonos_fiados", "clientes.id", "=", "abonos_fiados.id_cliente")
+            ->selectRaw("clientes.id, SUM(abonos_fiados.valor_abonado) as total_abonado")
+            ->where("clientes.id", $item->id)
+            ->groupBy('clientes.id')
+            ->get();
+
+            if(count($abonado_cliente) == 0){
+                $total_abonado = 0;
+            }else{
+                $total_abonado = (double) $abonado_cliente[0]->total_abonado;
+            }
+
+            $totalAbonado = $totalAbonado + $total_abonado;
+            $totalFiado = $totalFiado + $item->total_fiado;
+        }
+
+        
+        $totalPorCobrar = $totalFiado - $totalAbonado;
+
+        return view("cajas.cajas_index", compact("cajas", "totalVendidoMensual", "totalVendidoHoy", "totalFiado", "totalAbonado", "totalPorCobrar"));
     }
 }

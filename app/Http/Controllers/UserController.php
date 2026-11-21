@@ -33,6 +33,8 @@ class UserController extends Controller
 
         $clientes_deben = [];
         $total_fiado = 0;
+        $total_abonado_clientes = 0;
+        $total_por_cobrar = 0;
 
         foreach ($resultado as $item) {
             $abonado = Cliente::join("abonos_fiados", "clientes.id", "=", "abonos_fiados.id_cliente")
@@ -45,25 +47,29 @@ class UserController extends Controller
                 $total_abonado = 0;
             }else{
                 $total_abonado = $abonado[0]->total_abonado;
+                $total_abonado_clientes += $total_abonado;
             }
 
             $item->total_abonado = $total_abonado;
             $item->total_deuda = $item->total_fiado - $item->total_abonado;
 
-            
+            $total_fiado += $item->total_fiado;
+
             if($item->total_deuda > 0){
-                $total_fiado += $item->total_deuda;
                 array_push($clientes_deben, $item);
             }
         }
 
-        return view("usuarios.usuarios_deudores", ["clientes_deudores" => $clientes_deben, "total_fiado" => $total_fiado]);
+        $total_por_cobrar = $total_fiado - $total_abonado_clientes;
+
+        return view("usuarios.usuarios_deudores", ["clientes_deudores" => $clientes_deben, "total_fiado" => $total_fiado, "total_abonado_clientes" => $total_abonado_clientes, "total_por_cobrar" => $total_por_cobrar]);
     }
 
     public function abonar(Request $request)
     {
         $id_cliente = $request->input('id_cliente');
         $total_abonar = $request->input('total_abonar');
+
 
         $datos = [
             'id_cliente' => $id_cliente,
@@ -75,6 +81,7 @@ class UserController extends Controller
             $datos 
         );
 
+        
         
         $fiado = Cliente::join("fiados", "clientes.id", "=", "fiados.id_cliente")
         ->join("ventas", "ventas.id", "fiados.id_factura")
@@ -114,7 +121,7 @@ class UserController extends Controller
             ->delete();
         }
         
-        return redirect('/usuarios-deudores');
+        return response()->json(["mensaje" => "Abono realizado correctamente"]);
     }
 
     /**
